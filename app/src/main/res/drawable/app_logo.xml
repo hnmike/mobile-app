@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="80dp"
+    android:height="85dp"
+    android:viewportWidth="80"
+    android:viewportHeight="85">
+    
+    <!-- Document main rectangle -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="2.2"
+        android:pathData="M18,10 h44 v65 h-44 z" />
+        
+    <!-- Document binding right side -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="2.2"
+        android:pathData="M62,10 v65 c4,0 8,-3 8,-6 v-53 c0,-3 -4,-6 -8,-6" />
+        
+    <!-- Text line 1 - short line (title) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M23,32 h13 v5 h-13 z" />
+        
+    <!-- Text line 2 - long line -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M23,41 h42 v5 h-42 z" />
+        
+    <!-- Text line 3 - long line -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M23,51 h42 v5 h-42 z" />
+        
+    <!-- Text line 4 - long line -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M23,61 h42 v5 h-42 z" />
+        
+    <!-- Text line 5 - long line -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M23,71 h42 v5 h-42 z" />
+        
+    <!-- Text line 6 - short line (ending) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M23,81 h22 v5 h-22 z" />
+</vector> 

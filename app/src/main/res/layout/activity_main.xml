@@ -23,7 +23,7 @@
         android:id="@+id/bgCircle"
         android:layout_width="496dp"
         android:layout_height="496dp"
-        android:layout_marginStart="200dp"
+        android:layout_marginStart="210dp"
         android:layout_marginTop="-178dp"
         android:background="@drawable/circle_border"
         app:layout_constraintStart_toStartOf="parent"

@@ -39,7 +39,7 @@
         android:id="@+id/tvName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Văn Tước"
+        android:text="hoang tien"
         android:textColor="@color/text_primary"
         android:textSize="16sp"
         app:layout_constraintStart_toEndOf="@+id/profileImage"
@@ -81,7 +81,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chinh sua nguoi dung"
+                android:text="Chinh sua"
                 android:textColor="#4D4D4D"
                 android:textSize="16sp"
                 app:layout_constraintStart_toStartOf="parent"

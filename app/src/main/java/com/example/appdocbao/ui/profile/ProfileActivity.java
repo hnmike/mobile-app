@@ -21,6 +21,7 @@ import com.example.appdocbao.R;
 import com.example.appdocbao.ui.auth.SignInActivity;
 import com.example.appdocbao.ui.bookmarks.BookmarksActivity;
 import com.example.appdocbao.ui.categories.CategoriesActivity;
+import com.example.appdocbao.ui.account.AccountInfoActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,17 +29,17 @@ import com.google.firebase.auth.FirebaseUser;
 public class ProfileActivity extends AppCompatActivity {
 
     private static final String TAG = "ProfileActivity";
-    
+
     // UI Components
     private ImageView imgUserPhoto;
     private TextView tvUsername, tvEmail;
     private Button btnSignOut;
     private ProgressBar progressBar;
     private BottomNavigationView bottomNavigationView;
-    
+
     // ViewModel
     private ProfileViewModel viewModel;
-    
+
     // Flags
     private boolean isNavigating = false;
     private boolean viewsInitialized = false;
@@ -46,20 +47,20 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         try {
             // Set layout
             setContentView(R.layout.activity_profile);
-            
+
             Log.d(TAG, "ProfileActivity onCreate started");
-            
+
             // Kiểm tra đăng nhập trước khi khởi tạo giao diện
             if (!isUserLoggedIn()) {
                 Log.d(TAG, "User is not logged in, navigating to login screen");
                 safeNavigateToSignIn();
                 return;
             }
-            
+
             // Khởi tạo giao diện - với try-catch riêng để đảm bảo không bỏ qua phần nào
             try {
                 boolean initSuccess = initializeViews();
@@ -73,26 +74,26 @@ public class ProfileActivity extends AppCompatActivity {
                 safeNavigateToSignIn();
                 return;
             }
-            
+
             // Chỉ thực thi các phương thức khác khi đã khởi tạo views thành công
             try {
                 // Hiển thị loading indicator ngay lập tức
                 if (progressBar != null) {
                     progressBar.setVisibility(View.VISIBLE);
                 }
-                
+
                 setupViewModel();
-                
+
                 // Hiển thị dữ liệu người dùng hiện tại từ FirebaseAuth trước
                 loadUserData();
-                
+
                 // Sau đó thiết lập các observer để cập nhật dữ liệu từ ViewModel
                 setupObservers();
-                
+
                 // Thiết lập các listener và bottom navigation
                 setupListeners();
                 setupBottomNavigation();
-                
+
             } catch (Exception e) {
                 Log.e(TAG, "Error in ProfileActivity setup: " + e.getMessage(), e);
                 // Không rời khỏi activity, chỉ hiển thị thông báo lỗi
@@ -103,14 +104,14 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                 }
             }
-            
+
         } catch (Exception e) {
             Log.e(TAG, "Fatal error in ProfileActivity onCreate: " + e.getMessage(), e);
             Toast.makeText(this, "Lỗi khởi tạo ứng dụng", Toast.LENGTH_SHORT).show();
             safeNavigateToSignIn();
         }
     }
-    
+
     private boolean isUserLoggedIn() {
         try {
             FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -120,13 +121,13 @@ public class ProfileActivity extends AppCompatActivity {
             return false;
         }
     }
-    
+
     private boolean initializeViews() {
         try {
             imgUserPhoto = findViewById(R.id.profileImage);
             tvUsername = findViewById(R.id.tvName);
             tvEmail = findViewById(R.id.tvEmail);
-            
+
             // Kiểm tra xem cvSignOut có tồn tại trong layout không
             View signOutView = findViewById(R.id.cvSignOut);
             if (signOutView != null && signOutView instanceof Button) {
@@ -138,18 +139,18 @@ public class ProfileActivity extends AppCompatActivity {
             } else {
                 Log.e(TAG, "Sign out button/view not found in layout");
             }
-            
+
             progressBar = findViewById(R.id.progressBar);
-            
+
             // Kiểm tra bottomNavigation
-            View navView = findViewById(R.id.bottomNavigation); 
+            View navView = findViewById(R.id.bottomNavigation);
             if (navView != null && navView instanceof BottomNavigationView) {
                 bottomNavigationView = (BottomNavigationView) navView;
             } else {
                 Log.e(TAG, "Bottom navigation view not found or has wrong type");
                 bottomNavigationView = null;
             }
-            
+
             // Đánh dấu đã khởi tạo thành công nếu các view chính đã được tìm thấy
             viewsInitialized = (imgUserPhoto != null && tvUsername != null && tvEmail != null);
             return viewsInitialized;
@@ -159,26 +160,58 @@ public class ProfileActivity extends AppCompatActivity {
             return false;
         }
     }
-    
+
     private void setupListeners() {
         try {
             if (!viewsInitialized) return;
-            
+
             // Chỉ thiết lập listener nếu btnSignOut là Button
             if (btnSignOut != null) {
                 btnSignOut.setOnClickListener(v -> signOut());
             }
-            
+
             // Tìm các view khác để thiết lập listener nếu cần
             View cvSignOut = findViewById(R.id.cvSignOut);
             if (cvSignOut != null && btnSignOut == null) {
                 cvSignOut.setOnClickListener(v -> signOut());
             }
+
+            View cvAccountInfo = findViewById(R.id.cvAccountInfo);
+            if (cvAccountInfo != null) {
+                cvAccountInfo.setOnClickListener(v -> {
+                    Intent intent = new Intent(ProfileActivity.this, AccountInfoActivity.class);
+                    startActivity(intent);
+                });
+            }
+
+            View cvPolicy = findViewById(R.id.cvPolicy);
+            if (cvPolicy != null) {
+                cvPolicy.setOnClickListener(v -> {
+                    Intent intent = new Intent(ProfileActivity.this, ProfilePolicyActivity.class);
+                    startActivity(intent);
+                });
+            }
+
+            View cvTerms = findViewById(R.id.cvTerms);
+            if (cvTerms != null) {
+                cvTerms.setOnClickListener(v -> {
+                    Intent intent = new Intent(ProfileActivity.this, ProfileTermsActivity.class);
+                    startActivity(intent);
+                });
+            }
+
+            View cvLanguage = findViewById(R.id.cvLanguage);
+            if (cvLanguage != null) {
+                cvLanguage.setOnClickListener(v -> {
+                    Intent intent = new Intent(ProfileActivity.this, ProfileContactActivity.class);
+                    startActivity(intent);
+                });
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error setting up listeners: " + e.getMessage(), e);
         }
     }
-    
+
     private void signOut() {
         try {
             FirebaseAuth.getInstance().signOut();
@@ -189,12 +222,12 @@ public class ProfileActivity extends AppCompatActivity {
             safeNavigateToSignIn();
         }
     }
-    
+
     private void setupViewModel() {
         try {
             // Khởi tạo ViewModel sau
             viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
-            
+
             // Hiển thị loading indicator trong khi chờ dữ liệu
             if (progressBar != null) {
                 progressBar.setVisibility(View.VISIBLE);
@@ -203,21 +236,21 @@ public class ProfileActivity extends AppCompatActivity {
             Log.e(TAG, "Error initializing ViewModel: " + e.getMessage(), e);
         }
     }
-    
+
     private void loadUserData() {
         try {
             // Kiểm tra và hiển thị thông tin người dùng hiện tại từ Firebase Auth
             FirebaseAuth auth = FirebaseAuth.getInstance();
             FirebaseUser currentUser = auth.getCurrentUser();
-            
+
             if (currentUser != null) {
                 Log.d(TAG, "Current Firebase user: " + currentUser.getEmail());
-                
+
                 // Kiểm tra từng view trước khi sử dụng để tránh NPE
                 if (tvEmail != null) {
                     tvEmail.setText(currentUser.getEmail());
                 }
-                
+
                 if (tvUsername != null) {
                     if (currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty()) {
                         tvUsername.setText(currentUser.getDisplayName());
@@ -231,7 +264,7 @@ public class ProfileActivity extends AppCompatActivity {
                         }
                     }
                 }
-                
+
                 // Tải ảnh đại diện nếu có
                 if (imgUserPhoto != null) {
                     if (currentUser.getPhotoUrl() != null) {
@@ -264,14 +297,14 @@ public class ProfileActivity extends AppCompatActivity {
             }
         }
     }
-    
+
     private void setupObservers() {
         try {
             if (viewModel == null) {
                 Log.e(TAG, "Cannot setup observers: viewModel is null");
                 return;
             }
-            
+
             // Observe user data
             viewModel.getCurrentUser().observe(this, user -> {
                 try {
@@ -282,17 +315,17 @@ public class ProfileActivity extends AppCompatActivity {
                         if (displayedName == null || displayedName.isEmpty()) {
                             displayedName = user.getUsername();
                         }
-                        
+
                         if (tvUsername != null) {
                             tvUsername.setText(displayedName);
                         }
-                        
+
                         if (tvEmail != null) {
                             tvEmail.setText(user.getEmail());
                         }
-                        
+
                         Log.d(TAG, "Loading user profile: username=" + displayedName + ", email=" + user.getEmail());
-                        
+
                         // Cải thiện hiển thị ảnh đại diện
                         if (imgUserPhoto != null) {
                             if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
@@ -327,7 +360,7 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                 }
             });
-        
+
             // Observe loading state
             viewModel.getIsLoading().observe(this, isLoading -> {
                 try {
@@ -338,7 +371,7 @@ public class ProfileActivity extends AppCompatActivity {
                     Log.e(TAG, "Error updating loading state: " + e.getMessage(), e);
                 }
             });
-        
+
             // Observe error messages
             viewModel.getErrorMessage().observe(this, errorMessage -> {
                 try {
@@ -363,7 +396,7 @@ public class ProfileActivity extends AppCompatActivity {
                 Log.e(TAG, "Cannot setup bottom navigation: bottomNavigationView is null");
                 return;
             }
-            
+
             bottomNavigationView.setSelectedItemId(R.id.nav_profile);
             bottomNavigationView.setOnItemSelectedListener(item -> {
                 try {
@@ -397,16 +430,16 @@ public class ProfileActivity extends AppCompatActivity {
                 return;
             }
             isNavigating = true;
-            
+
             Log.d(TAG, "Navigating to SignInActivity");
-            
+
             // Phương pháp 1: Intent thông thường
             Intent intent = new Intent(ProfileActivity.this, SignInActivity.class);
             startActivity(intent);
             finish();
         } catch (Exception e) {
             Log.e(TAG, "Error with normal intent navigation: " + e.getMessage(), e);
-            
+
             try {
                 // Phương pháp 2: Intent với tên lớp đầy đủ
                 Intent intent = new Intent();
@@ -415,7 +448,7 @@ public class ProfileActivity extends AppCompatActivity {
                 finish();
             } catch (Exception e2) {
                 Log.e(TAG, "Error with explicit class name intent: " + e2.getMessage(), e2);
-                
+
                 try {
                     // Phương pháp cuối cùng: Trở về màn hình chính
                     Intent homeIntent = new Intent(this, CategoriesActivity.class);
@@ -430,4 +463,4 @@ public class ProfileActivity extends AppCompatActivity {
             }
         }
     }
-} 
+}

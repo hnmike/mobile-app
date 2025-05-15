@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.appdocbao.ui.auth.AuthViewModel;
 import com.example.appdocbao.ui.auth.SignInActivity;
 import com.example.appdocbao.ui.categories.CategoriesActivity;
+import com.example.appdocbao.ui.home.HomeActivity;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -63,9 +64,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void navigateToNextScreen() {
-        // Luôn chuyển đến trang Categories không quan tâm đến đăng nhập
-            Intent intent = new Intent(MainActivity.this, CategoriesActivity.class);
-            startActivity(intent);
+        // Navigate to HomeActivity instead of CategoriesActivity
+        Intent intent = new Intent(MainActivity.this, HomeActivity.class);
+        startActivity(intent);
         
         // Finish this activity so the user can't go back to the splash screen
         finish();

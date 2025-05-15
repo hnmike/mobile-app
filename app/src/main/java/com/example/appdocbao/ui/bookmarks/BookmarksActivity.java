@@ -78,7 +78,12 @@ public class BookmarksActivity extends AppCompatActivity implements NewsAdapter.
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 int itemId = item.getItemId();
-                if (itemId == R.id.nav_categories) {
+                if (itemId == R.id.nav_home) {
+                    Intent intent = new Intent(BookmarksActivity.this, com.example.appdocbao.ui.home.HomeActivity.class);
+                    startActivity(intent);
+                    finish();
+                    return true;
+                } else if (itemId == R.id.nav_categories) {
                     startActivity(new Intent(BookmarksActivity.this, CategoriesActivity.class));
                     finish();
                     return true;

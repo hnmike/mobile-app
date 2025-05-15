@@ -368,7 +368,12 @@ public class ProfileActivity extends AppCompatActivity {
             bottomNavigationView.setOnItemSelectedListener(item -> {
                 try {
                     int itemId = item.getItemId();
-                    if (itemId == R.id.nav_categories) {
+                    if (itemId == R.id.nav_home) {
+                        Intent intent = new Intent(ProfileActivity.this, com.example.appdocbao.ui.home.HomeActivity.class);
+                        startActivity(intent);
+                        finish();
+                        return true;
+                    } else if (itemId == R.id.nav_categories) {
                         startActivity(new Intent(ProfileActivity.this, CategoriesActivity.class));
                         finish();
                         return true;

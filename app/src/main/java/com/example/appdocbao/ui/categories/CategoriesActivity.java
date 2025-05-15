@@ -111,7 +111,12 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
             bottomNavigationView.setOnItemSelectedListener(item -> {
                 try {
                     int itemId = item.getItemId();
-                    if (itemId == R.id.nav_categories) {
+                    if (itemId == R.id.nav_home) {
+                        // Navigate to Home screen
+                        Intent intent = new Intent(CategoriesActivity.this, com.example.appdocbao.ui.home.HomeActivity.class);
+                        startActivity(intent);
+                        return true;
+                    } else if (itemId == R.id.nav_categories) {
                         // Đã ở Categories rồi
                         return true;
                     } else if (itemId == R.id.nav_bookmarks) {

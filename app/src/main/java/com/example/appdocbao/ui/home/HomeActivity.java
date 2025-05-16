@@ -26,22 +26,40 @@ import com.example.appdocbao.data.News;
 import com.example.appdocbao.data.model.Category;
 import com.example.appdocbao.ui.newslist.NewsAdapter;
 import com.example.appdocbao.ui.newslist.NewsListActivity;
+import com.example.appdocbao.ui.bookmarks.BookmarksActivity;
+import com.example.appdocbao.ui.categories.CategoriesActivity;
+import com.example.appdocbao.ui.profile.ProfileActivity;
+import com.example.appdocbao.api.RetrofitClient;
+import com.example.appdocbao.api.VnExpressService;
+import com.example.appdocbao.api.VnExpressParser;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity {
 
+    private static final String TAG = "HomeActivity";
     private RecyclerView rvCategories;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private BottomNavigationView bottomNavigationView;
     
     private HomeCategoriesAdapter homeCategoriesAdapter;
     
     private List<News> allNewsList = new ArrayList<>();
     private List<Category> categories = new ArrayList<>();
+    private Executor executor = Executors.newSingleThreadExecutor();
+    private VnExpressService vnExpressService;
+    private VnExpressParser vnExpressParser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,16 +70,22 @@ public class HomeActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            // Không hiển thị nút back ở trang chủ
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
             getSupportActionBar().setTitle("Trang chủ");
         }
         
         // Khởi tạo các view
         rvCategories = findViewById(R.id.rvCategories);
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        bottomNavigationView = findViewById(R.id.bottomNavigation);
+        
+        // Khởi tạo API service
+        vnExpressService = RetrofitClient.getClient().create(VnExpressService.class);
+        vnExpressParser = new VnExpressParser();
         
         // Thiết lập SwipeRefreshLayout
-        swipeRefreshLayout.setOnRefreshListener(this::loadData);
+        swipeRefreshLayout.setOnRefreshListener(this::loadDataFromApi);
         swipeRefreshLayout.setColorSchemeResources(
                 android.R.color.holo_blue_bright,
                 android.R.color.holo_green_light,
@@ -74,24 +98,77 @@ public class HomeActivity extends AppCompatActivity {
         homeCategoriesAdapter = new HomeCategoriesAdapter(this, new ArrayList<>(), new HashMap<>());
         rvCategories.setAdapter(homeCategoriesAdapter);
         
+        // Thiết lập bottom navigation
+        setupBottomNavigation();
+        
         // Tải dữ liệu
-        loadData();
+        loadDataFromApi();
     }
 
-    private void loadData() {
+    private void setupBottomNavigation() {
+        if (bottomNavigationView == null) {
+            Log.w(TAG, "Bottom navigation view is null, possibly not in the layout");
+            return;
+        }
+        
+        bottomNavigationView.setSelectedItemId(R.id.nav_home);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            try {
+                int itemId = item.getItemId();
+                if (itemId == R.id.nav_home) {
+                    // Đã ở Home rồi
+                    return true;
+                } else if (itemId == R.id.nav_categories) {
+                    // Chuyển đến CategoriesActivity
+                    Intent intent = new Intent(HomeActivity.this, CategoriesActivity.class);
+                    startActivity(intent);
+                    return true;
+                } else if (itemId == R.id.nav_bookmarks) {
+                    // Chuyển đến BookmarksActivity
+                    Intent intent = new Intent(HomeActivity.this, BookmarksActivity.class);
+                    startActivity(intent);
+                    return true;
+                } else if (itemId == R.id.nav_profile) {
+                    // Kiểm tra login và chuyển đến trang phù hợp
+                    if (isUserLoggedIn()) {
+                        // Nếu đã đăng nhập, mở ProfileActivity
+                        Intent profileIntent = new Intent(HomeActivity.this, ProfileActivity.class);
+                        startActivity(profileIntent);
+                    } else {
+                        // Nếu chưa đăng nhập, mở SignInActivity
+                        Intent loginIntent = new Intent();
+                        loginIntent.setClassName(getPackageName(), "com.example.appdocbao.ui.auth.SignInActivity");
+                        startActivity(loginIntent);
+                    }
+                    return true;
+                }
+                return false;
+            } catch (Exception e) {
+                Log.e(TAG, "Error in navigation: " + e.getMessage(), e);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Kiểm tra trạng thái đăng nhập của người dùng
+     * @return true nếu đã đăng nhập, false nếu chưa
+     */
+    private boolean isUserLoggedIn() {
+        try {
+            return com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null;
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking login status: " + e.getMessage(), e);
+            return false;
+        }
+    }
+
+    private void loadDataFromApi() {
         // Hiển thị loading indicator
         swipeRefreshLayout.setRefreshing(true);
         
-        // Tạo tin tức
-        allNewsList = createSampleNews();
-        
-        // Lọc tin tức nổi bật
-        List<News> featuredNews = allNewsList.stream()
-                .filter(News::isFeatured)
-                .collect(Collectors.toList());
-        
         // Tạo danh mục
-        categories = createSampleCategories();
+        categories = createCategories();
         
         // Thêm "danh mục" đặc biệt cho bài viết nổi bật ở đầu danh sách
         Category featuredCategory = new Category("0", "Bài viết nổi bật", "Các bài viết nổi bật trên hệ thống", "🔥");
@@ -101,35 +178,177 @@ public class HomeActivity extends AppCompatActivity {
         
         // Nhóm tin tức theo danh mục
         Map<Integer, List<News>> categoryNewsMap = new HashMap<>();
-        // Thêm danh sách bài viết nổi bật vào map với ID là 0
-        categoryNewsMap.put(0, featuredNews);
         
+        // Số lượng danh mục đã xử lý
+        final int[] processedCategories = {0};
+        final int totalCategories = allCategories.size();
+        
+        // Tải tin tức từ API cho tất cả danh mục
+        loadCategoriesNewsFromApi(allCategories, categoryNewsMap, processedCategories, totalCategories);
+    }
+    
+    private void loadCategoriesNewsFromApi(List<Category> allCategories, Map<Integer, List<News>> categoryNewsMap, 
+                                          final int[] processedCategories, final int totalCategories) {
+        // Tải tin tức cho mỗi danh mục
+        for (Category category : allCategories) {
+            final int categoryId;
+            try {
+                categoryId = Integer.parseInt(category.getId());
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "Failed to parse category ID: " + category.getId(), e);
+                continue;
+            }
+            
+            // Lấy URL tương ứng cho danh mục
+            final String url = getCategoryUrl(categoryId);
+            
+            if (url != null) {
+                // Sử dụng repository để tải bài viết từ API
+                loadNewsForCategory(url, categoryId, category, categoryNewsMap, processedCategories, totalCategories);
+            } else {
+                // Không có URL cho danh mục này
+                processedCategories[0]++;
+                categoryNewsMap.put(categoryId, new ArrayList<>());
+                
+                checkAndUpdateUIIfComplete(categoryNewsMap, processedCategories[0], totalCategories);
+            }
+        }
+    }
+    
+    private void loadNewsForCategory(String url, int categoryId, Category category, 
+                                    Map<Integer, List<News>> categoryNewsMap, 
+                                    final int[] processedCategories, final int totalCategories) {
+        // Tạo bản sao final của categoryId để sử dụng trong lambda
+        final int finalCategoryId = categoryId;
+        
+        vnExpressService.getHtmlContent(url).enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                executor.execute(() -> {
+                    try {
+                        if (response.isSuccessful() && response.body() != null) {
+                            // Phân tích nội dung HTML để lấy danh sách bài viết
+                            List<News> newsForCategory = vnExpressParser.parseNews(response.body(), finalCategoryId);
+                            
+                            // Cập nhật danh sách tin tức cho danh mục
+                            runOnUiThread(() -> {
+                                categoryNewsMap.put(finalCategoryId, newsForCategory);
+                                processedCategories[0]++;
+                                
+                                // Kiểm tra và cập nhật UI nếu đã hoàn thành
+                                checkAndUpdateUIIfComplete(categoryNewsMap, processedCategories[0], totalCategories);
+                            });
+                        } else {
+                            runOnUiThread(() -> {
+                                processedCategories[0]++;
+                                categoryNewsMap.put(finalCategoryId, new ArrayList<>());
+                                
+                                // Kiểm tra và cập nhật UI nếu đã hoàn thành
+                                checkAndUpdateUIIfComplete(categoryNewsMap, processedCategories[0], totalCategories);
+                                
+                                // Hiển thị thông báo lỗi nếu cần
+                                if (processedCategories[0] >= totalCategories) {
+                                    Toast.makeText(HomeActivity.this, 
+                                            "Không thể tải dữ liệu cho danh mục " + category.getName(), 
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing news for category " + finalCategoryId, e);
+                        runOnUiThread(() -> {
+                            processedCategories[0]++;
+                            categoryNewsMap.put(finalCategoryId, new ArrayList<>());
+                            
+                            // Kiểm tra và cập nhật UI nếu đã hoàn thành
+                            checkAndUpdateUIIfComplete(categoryNewsMap, processedCategories[0], totalCategories);
+                        });
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                Log.e(TAG, "API call failed for category " + finalCategoryId, t);
+                runOnUiThread(() -> {
+                    processedCategories[0]++;
+                    categoryNewsMap.put(finalCategoryId, new ArrayList<>());
+                    
+                    // Kiểm tra và cập nhật UI nếu đã hoàn thành
+                    checkAndUpdateUIIfComplete(categoryNewsMap, processedCategories[0], totalCategories);
+                });
+            }
+        });
+    }
+    
+    private void checkAndUpdateUIIfComplete(Map<Integer, List<News>> categoryNewsMap, 
+                                          int processedCount, int totalCount) {
+        if (processedCount >= totalCount) {
+            // Lấy danh sách danh mục đã được cập nhật
+            List<Category> updatedCategories = new ArrayList<>();
+            
+            // Thêm danh mục đặc biệt cho bài viết nổi bật
+            Category featuredCategory = new Category("0", "Bài viết nổi bật", "Các bài viết nổi bật trên hệ thống", "🔥");
+            updatedCategories.add(featuredCategory);
+            
+            // Thêm các danh mục thông thường
+            updatedCategories.addAll(categories);
+            
+            // Cập nhật adapter
+            homeCategoriesAdapter.updateData(updatedCategories, categoryNewsMap);
+            
+            // Ẩn loading indicator
+            swipeRefreshLayout.setRefreshing(false);
+            
+            // Thêm log để gỡ lỗi
+            logCategoryNewsStats(updatedCategories, categoryNewsMap);
+        }
+    }
+    
+    private void logCategoryNewsStats(List<Category> categories, Map<Integer, List<News>> categoryNewsMap) {
+        int totalNews = 0;
         for (Category category : categories) {
-            final int categoryId = Integer.parseInt(category.getId());
-            List<News> newsForCategory = allNewsList.stream()
-                    .filter(news -> news.getCategoryId() == categoryId)
-                    .limit(5) // Giới hạn 5 bài viết cho mỗi danh mục
-                    .collect(Collectors.toList());
-            categoryNewsMap.put(categoryId, newsForCategory);
+            try {
+                int categoryId = Integer.parseInt(category.getId());
+                List<News> news = categoryNewsMap.get(categoryId);
+                int newsCount = news != null ? news.size() : 0;
+                totalNews += newsCount;
+                
+                Log.d(TAG, "Category: " + category.getName() + 
+                        " (ID: " + category.getId() + ") - News count: " + newsCount);
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "Invalid category ID: " + category.getId());
+            }
         }
-        
-        // In thông tin debug
-        for (Map.Entry<Integer, List<News>> entry : categoryNewsMap.entrySet()) {
-            Log.d("HomeActivity", "Category ID: " + entry.getKey() + ", News count: " + 
-                    (entry.getValue() != null ? entry.getValue().size() : 0));
-        }
-        
-        // Cập nhật adapter cho danh mục (đã bao gồm cả phần bài viết nổi bật)
-        homeCategoriesAdapter.updateData(allCategories, categoryNewsMap);
-        
-        // Ẩn loading indicator
-        swipeRefreshLayout.setRefreshing(false);
-        
-        // Thông báo cho người dùng biết dữ liệu đã được tải
-        Toast.makeText(this, "Đã tải dữ liệu mới nhất", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "Total categories: " + categories.size() + ", Total news: " + totalNews);
     }
 
-    private List<Category> createSampleCategories() {
+    private String getCategoryUrl(int categoryId) {
+        switch (categoryId) {
+            case 0: 
+                return "https://vnexpress.net/tin-tuc-24h"; // Bài viết nổi bật
+            case 1:
+                return "https://vnexpress.net/thoi-su"; // Thời sự
+            case 2:
+                return "https://vnexpress.net/the-gioi"; // Thế giới
+            case 3:
+                return "https://vnexpress.net/kinh-doanh"; // Kinh doanh
+            case 4:
+                return "https://vnexpress.net/giai-tri"; // Giải trí
+            case 5:
+                return "https://vnexpress.net/the-thao"; // Thể thao
+            case 6:
+                return "https://vnexpress.net/phap-luat"; // Pháp luật
+            case 7:
+                return "https://vnexpress.net/giao-duc"; // Giáo dục
+            case 8:
+                return "https://vnexpress.net/suc-khoe"; // Sức khỏe
+            default:
+                return null;
+        }
+    }
+
+    private List<Category> createCategories() {
         List<Category> categoriesList = new ArrayList<>();
         // Sử dụng constructor hiện có (String id, String name, String description, String iconEmoji)
         categoriesList.add(new Category("1", "Thời sự", "Tin tức thời sự trong nước", "📰"));
@@ -141,64 +360,6 @@ public class HomeActivity extends AppCompatActivity {
         categoriesList.add(new Category("7", "Giáo dục", "Tin tức giáo dục", "🎓"));
         categoriesList.add(new Category("8", "Sức khỏe", "Tin tức y tế, sức khỏe", "🏥"));
         return categoriesList;
-    }
-
-    private List<News> createSampleNews() {
-        List<News> newsList = new ArrayList<>();
-        
-        // Tin tức danh mục Thời sự
-        newsList.add(new News(1, "Hơn 1.000 người diễn tập chữa cháy ở chung cư cao tầng", 
-                "Các lực lượng phối hợp diễn tập tình huống cháy ở tầng 15...", 
-                "https://example.com/image1.jpg", "08:00 - 10/05/2023", 1, true));
-        newsList.add(new News(2, "Nhiều đường TP HCM ngập do triều cường",
-                "Đường Huỳnh Tấn Phát, Trần Xuân Soạn... ngập sâu...", 
-                "https://example.com/image2.jpg", "10:30 - 10/05/2023", 1, false));
-        newsList.add(new News(3, "Người mẫu Nga được 'bảo lãnh' trở lại Việt Nam",
-                "Ekaterina Kuznetsova về nước sau khi được nhà ngoại giao Việt Nam bảo lãnh...", 
-                "https://example.com/image3.jpg", "14:15 - 10/05/2023", 1, false));
-        
-        // Tin tức danh mục Thế giới
-        newsList.add(new News(4, "Nhật Bản cân nhắc chi 42 tỷ USD hỗ trợ gia đình sinh con",
-                "Chính phủ Nhật Bản cân nhắc chi 6.000 tỷ yen mỗi năm để trợ cấp cho các gia đình sinh con...", 
-                "https://example.com/image4.jpg", "07:45 - 10/05/2023", 2, true));
-        newsList.add(new News(5, "Đối phương của Trump trong cuộc tranh luận ngày 10/9",
-                "Phó tổng thống Mỹ Kamala Harris có bề dày kinh nghiệm tranh luận chính trị...", 
-                "https://example.com/image5.jpg", "09:20 - 10/05/2023", 2, false));
-        
-        // Tin tức danh mục Kinh doanh
-        newsList.add(new News(6, "Giá vàng miếng giảm, nhẫn tăng",
-                "Giá vàng miếng SJC giảm 300.000 đồng mỗi lượng...", 
-                "https://example.com/image6.jpg", "15:40 - 10/05/2023", 3, true));
-        newsList.add(new News(7, "Thời đại của 'đồng đô xanh' đang kết thúc?",
-                "Vụ ám sát Tổng thống Iran Raisi đang thúc đẩy Iran...", 
-                "https://example.com/image7.jpg", "11:10 - 10/05/2023", 3, false));
-        
-        // Tin tức danh mục Giải trí
-        newsList.add(new News(8, "Cô dâu duy nhất của Jack Nicholson",
-                "Sandra Knight là người phụ nữ duy nhất Jack Nicholson cưới...", 
-                "https://example.com/image8.jpg", "16:30 - 10/05/2023", 4, true));
-        newsList.add(new News(9, "Jolie không muốn Pitt gặp các con",
-                "Angelina Jolie không muốn Brad Pitt có quan hệ với các con...", 
-                "https://example.com/image9.jpg", "13:45 - 10/05/2023", 4, false));
-        
-        // Tin tức danh mục Thể thao
-        newsList.add(new News(10, "Lukaku ghi bàn ngày ra mắt Napoli",
-                "Romelu Lukaku mất chưa đầy 10 phút để ghi bàn ra mắt...", 
-                "https://example.com/image10.jpg", "08:15 - 10/05/2023", 5, true));
-        newsList.add(new News(11, "Djokovic: 'Tôi không thích tiệm cận sự hoàn hảo'",
-                "Novak Djokovic không còn khát khao trọn vẹn mọi khía cạnh...", 
-                "https://example.com/image11.jpg", "12:20 - 10/05/2023", 5, false));
-        
-        return newsList;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     // Inner adapter class cho danh mục và tin tức của mỗi danh mục
@@ -255,8 +416,9 @@ public class HomeActivity extends AppCompatActivity {
             
             // Xử lý sự kiện khi nhấn vào "Xem tất cả"
             holder.tvViewAll.setOnClickListener(v -> {
-                Intent intent = new Intent(context, NewsListActivity.class);
-                intent.putExtra("CATEGORY_ID", category.getId());
+                // First try to open the category in CategoriesActivity
+                Intent intent = new Intent(context, com.example.appdocbao.ui.categories.CategoriesActivity.class);
+                intent.putExtra("SELECTED_CATEGORY_ID", category.getId());
                 intent.putExtra("CATEGORY_NAME", category.getName());
                 context.startActivity(intent);
             });
@@ -364,7 +526,7 @@ public class HomeActivity extends AppCompatActivity {
             
             holder.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(context, NewsDetailActivity.class);
-                intent.putExtra("NEWS_ID", news.getId());
+                intent.putExtra(com.example.appdocbao.utils.Constants.EXTRA_ARTICLE_ID, String.valueOf(news.getId()));
                 context.startActivity(intent);
             });
         }

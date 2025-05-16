@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
             
             FirebaseOptions options = FirebaseApp.getInstance().getOptions();
             String apiKey = options.getApiKey();
-            if ("AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q".equals(apiKey)) {
+            if ("AIzaSyCVcfU_WWRQnMozFXJSzGtrhc3C8oWbd4Q".equals(apiKey)) {
                 Log.e("MainActivity", "⚠️ CẢNH BÁO: Đang sử dụng API key mẫu! Cần thay thế google-services.json");
             }
             

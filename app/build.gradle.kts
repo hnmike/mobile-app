@@ -2,6 +2,11 @@ plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
 }
+plugins {
+    id("com.android.application")
+}
+
+apply(plugin = "com.google.gms.google-services")
 
 android {
     namespace = "com.example.appdocbao"

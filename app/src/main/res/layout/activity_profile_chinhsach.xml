@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:ignore="ExtraText">
+
+    <!-- Nút quay lại -->
+    <ImageView
+        android:id="@+id/btnBack"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_back"
+        android:contentDescription="Quay lại"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+    <!-- Nội dung chính sách -->
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="361dp"
+        android:layout_height="27dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="CHÍNH SÁCH BẢO MẬT"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/textView2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:lineSpacingExtra="6dp"
+        android:justificationMode="inter_word"
+        android:text="1. Giới thiệu
+\n      Ứng dụng là một nền tảng tổng hợp và phân phối nội dung tin tức từ nhiều nguồn khác nhau. Chúng tôi cam kết cung cấp thông tin nhanh chóng, chính xác và đa chiều cho người dùng.
+
+\n      Việc sử dụng ứng dụng đồng nghĩa với việc bạn đã đọc, hiểu và đồng ý tuân thủ các chính sách dưới đây.
+
+\n2. Điều khoản sử dụng
+\n      Người dùng không được sử dụng ứng dụng cho các mục đích trái pháp luật, vi phạm thuần phong mỹ tục hoặc gây ảnh hưởng xấu đến hệ thống và cộng đồng.
+
+\n      Nghiêm cấm việc sao chép, tái sử dụng nội dung từ ứng dụng mà không có sự cho phép từ nguồn cung cấp.
+
+\n      Chúng tôi có quyền tạm ngưng hoặc chấm dứt tài khoản của người dùng nếu phát hiện hành vi vi phạm điều khoản sử dụng.
+
+\n3. Quyền riêng tư và Bảo mật dữ liệu
+\n      Chúng tôi cam kết bảo vệ thông tin cá nhân của người dùng theo quy định của pháp luật.
+\n      Chúng tôi không chia sẻ hoặc bán thông tin cho bên thứ ba, trừ khi có yêu cầu từ cơ quan pháp luật.
+
+\n4. Nội dung và Bản quyền
+\n      Nội dung hiển thị trong ứng dụng có thể đến từ các đối tác, nguồn báo điện tử chính thống.
+
+\n      Mọi nội dung đều tuân thủ luật bản quyền."
+        android:scrollbars="vertical"
+        app:layout_constraintTop_toBottomOf="@id/textView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

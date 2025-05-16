@@ -64,11 +64,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void navigateToNextScreen() {
-        // Navigate to HomeActivity instead of CategoriesActivity
-        Intent intent = new Intent(MainActivity.this, HomeActivity.class);
+        // Chuyển đến CategoriesActivity thay vì HomeActivity
+        Intent intent = new Intent(MainActivity.this, CategoriesActivity.class);
         startActivity(intent);
         
-        // Finish this activity so the user can't go back to the splash screen
+        // Finish this activity
         finish();
     }
 

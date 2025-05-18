@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
 }
+dependencies {
+    implementation("com.facebook.android:facebook-android-sdk:18.0.3")
+}
 
 android {
     namespace = "com.example.appdocbao"

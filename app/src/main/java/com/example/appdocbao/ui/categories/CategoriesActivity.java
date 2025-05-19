@@ -54,6 +54,23 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
 
             // Load categories
             viewModel.loadCategories();
+            
+            // Check if a specific category was selected
+            String selectedCategoryId = getIntent().getStringExtra("SELECTED_CATEGORY_ID");
+            if (selectedCategoryId != null) {
+                // Handle selected category after categories are loaded
+                viewModel.getCategories().observe(this, categories -> {
+                    for (Category category : categories) {
+                        if (category.getId().equals(selectedCategoryId)) {
+                            // Open the category in NewsListActivity
+                            onCategoryClick(category);
+                            break;
+                        }
+                    }
+                    // Remove observer after first categories load
+                    viewModel.getCategories().removeObservers(this);
+                });
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error initializing CategoriesActivity: " + e.getMessage(), e);
             Toast.makeText(this, "Error initializing application: " + e.getMessage(), Toast.LENGTH_LONG).show();

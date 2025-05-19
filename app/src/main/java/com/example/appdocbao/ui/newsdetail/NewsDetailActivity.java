@@ -35,14 +35,27 @@ public class NewsDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_news_detail);
 
         try {
-            // Get article ID from intent
+            // Get article ID from intent - hỗ trợ cả ID từ News object và Article object
             articleId = getIntent().getStringExtra(Constants.EXTRA_ARTICLE_ID);
+            
+            // Nếu không tìm thấy qua EXTRA_ARTICLE_ID, thử kiểm tra xem có ID dạng số nguyên không
             if (articleId == null) {
-                Toast.makeText(this, "Không thể tải bài viết", Toast.LENGTH_SHORT).show();
+                int newsId = getIntent().getIntExtra("NEWS_ID", -1);
+                if (newsId != -1) {
+                    articleId = String.valueOf(newsId);
+                    Log.d("NewsDetailActivity", "Using numeric ID: " + articleId);
+                }
+            }
+            
+            // Nếu vẫn không tìm thấy ID, kết thúc activity
+            if (articleId == null) {
+                Toast.makeText(this, "Không thể tải bài viết - ID không hợp lệ", Toast.LENGTH_SHORT).show();
                 finish();
                 return;
             }
 
+            Log.d("NewsDetailActivity", "Article ID to load: " + articleId);
+            
             // Initialize UI components
             Toolbar toolbar = findViewById(R.id.toolbar);
             setSupportActionBar(toolbar);
@@ -145,6 +158,7 @@ public class NewsDetailActivity extends AppCompatActivity {
                 this.isBookmarked = isBookmarked;
                 btnBookmark.setImageResource(isBookmarked ? 
                         R.drawable.ic_bookmark_filled : R.drawable.ic_bookmark_outline);
+                Log.d("NewsDetailActivity", "Updated bookmark state to: " + isBookmarked + " for article: " + articleId);
             }
         } catch (Exception e) {
             Log.e("NewsDetailActivity", "Error updating bookmark state: " + e.getMessage(), e);
@@ -153,10 +167,16 @@ public class NewsDetailActivity extends AppCompatActivity {
 
     private void toggleBookmark() {
         try {
-            if (isBookmarked) {
-                viewModel.removeBookmark(articleId);
+            Log.d("NewsDetailActivity", "Toggle bookmark for article: " + articleId + ", current state: " + isBookmarked);
+            
+            boolean newBookmarkState = viewModel.toggleBookmark(articleId);
+            isBookmarked = newBookmarkState;
+            updateBookmarkState(newBookmarkState);
+            
+            if (newBookmarkState) {
+                Toast.makeText(this, "Đã lưu bài viết", Toast.LENGTH_SHORT).show();
             } else {
-                viewModel.addBookmark(articleId);
+                Toast.makeText(this, "Đã xóa bài viết khỏi danh sách đã lưu", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             Log.e("NewsDetailActivity", "Error toggling bookmark: " + e.getMessage(), e);

@@ -64,8 +64,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void navigateToNextScreen() {
-        // Chuyển đến CategoriesActivity thay vì HomeActivity
-        Intent intent = new Intent(MainActivity.this, CategoriesActivity.class);
+        // Chuyển đến HomeActivity thay vì CategoriesActivity
+        Intent intent = new Intent(MainActivity.this, HomeActivity.class);
         startActivity(intent);
         
         // Finish this activity

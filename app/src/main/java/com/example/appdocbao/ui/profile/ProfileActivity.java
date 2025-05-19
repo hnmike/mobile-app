@@ -3,15 +3,11 @@ package com.example.appdocbao.ui.profile;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -19,8 +15,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.appdocbao.R;
 import com.example.appdocbao.ui.auth.SignInActivity;
-import com.example.appdocbao.ui.bookmarks.BookmarksActivity;
 import com.example.appdocbao.ui.categories.CategoriesActivity;
+import com.example.appdocbao.ui.bookmarks.BookmarksActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,17 +24,24 @@ import com.google.firebase.auth.FirebaseUser;
 public class ProfileActivity extends AppCompatActivity {
 
     private static final String TAG = "ProfileActivity";
-    
+
     // UI Components
     private ImageView imgUserPhoto;
     private TextView tvUsername, tvEmail;
-    private Button btnSignOut;
     private ProgressBar progressBar;
     private BottomNavigationView bottomNavigationView;
-    
+
+    private ImageView btnChevronLanguage;
+    private ImageView btnChevronAccountInfo;
+    private ImageView btnChevronPolicy;
+    private ImageView btnChevronTerms;
+    private ImageView btnLogout;
+
+    private View signOutView;
+
     // ViewModel
     private ProfileViewModel viewModel;
-    
+
     // Flags
     private boolean isNavigating = false;
     private boolean viewsInitialized = false;
@@ -46,388 +49,128 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        try {
-            // Set layout
-            setContentView(R.layout.activity_profile);
-            
-            Log.d(TAG, "ProfileActivity onCreate started");
-            
-            // Kiểm tra đăng nhập trước khi khởi tạo giao diện
-            if (!isUserLoggedIn()) {
-                Log.d(TAG, "User is not logged in, navigating to login screen");
-                safeNavigateToSignIn();
-                return;
-            }
-            
-            // Khởi tạo giao diện - với try-catch riêng để đảm bảo không bỏ qua phần nào
-            try {
-                boolean initSuccess = initializeViews();
-                if (!initSuccess) {
-                    Log.e(TAG, "Failed to initialize UI components");
-                    safeNavigateToSignIn();
-                    return;
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error initializing views: " + e.getMessage(), e);
-                safeNavigateToSignIn();
-                return;
-            }
-            
-            // Chỉ thực thi các phương thức khác khi đã khởi tạo views thành công
-            try {
-                // Hiển thị loading indicator ngay lập tức
-                if (progressBar != null) {
-                    progressBar.setVisibility(View.VISIBLE);
-                }
-                
-                setupViewModel();
-                
-                // Hiển thị dữ liệu người dùng hiện tại từ FirebaseAuth trước
-                loadUserData();
-                
-                // Sau đó thiết lập các observer để cập nhật dữ liệu từ ViewModel
-                setupObservers();
-                
-                // Thiết lập các listener và bottom navigation
-                setupListeners();
-                setupBottomNavigation();
-                
-            } catch (Exception e) {
-                Log.e(TAG, "Error in ProfileActivity setup: " + e.getMessage(), e);
-                // Không rời khỏi activity, chỉ hiển thị thông báo lỗi
-                if (viewsInitialized) {
-                    Toast.makeText(this, "Có lỗi khi tải dữ liệu, vui lòng thử lại", Toast.LENGTH_SHORT).show();
-                    if (progressBar != null) {
-                        progressBar.setVisibility(View.GONE);
-                    }
-                }
-            }
-            
-        } catch (Exception e) {
-            Log.e(TAG, "Fatal error in ProfileActivity onCreate: " + e.getMessage(), e);
-            Toast.makeText(this, "Lỗi khởi tạo ứng dụng", Toast.LENGTH_SHORT).show();
+        setContentView(R.layout.activity_profile);
+
+        Log.d(TAG, "ProfileActivity onCreate started");
+
+        if (!isUserLoggedIn()) {
+            Log.d(TAG, "User is not logged in, navigating to login screen");
             safeNavigateToSignIn();
+            return;
         }
+
+        if (!initializeViews()) {
+            Log.e(TAG, "Failed to initialize UI components");
+            safeNavigateToSignIn();
+            return;
+        }
+
+        setupViewModel();
+        loadUserData();
+        setupObservers();
+        setupListeners();
     }
-    
+
     private boolean isUserLoggedIn() {
-        try {
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-            return auth != null && auth.getCurrentUser() != null;
-        } catch (Exception e) {
-            Log.e(TAG, "Error checking login status: " + e.getMessage(), e);
-            return false;
-        }
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        return auth != null && auth.getCurrentUser() != null;
     }
-    
+
     private boolean initializeViews() {
         try {
             imgUserPhoto = findViewById(R.id.profileImage);
             tvUsername = findViewById(R.id.tvName);
             tvEmail = findViewById(R.id.tvEmail);
-            
-            // Kiểm tra xem cvSignOut có tồn tại trong layout không
-            View signOutView = findViewById(R.id.cvSignOut);
-            if (signOutView != null && signOutView instanceof Button) {
-                btnSignOut = (Button) signOutView;
-            } else if (signOutView != null) {
-                // Nếu không phải Button, sử dụng onClick cho View
-                btnSignOut = null;
-                signOutView.setOnClickListener(v -> signOut());
-            } else {
-                Log.e(TAG, "Sign out button/view not found in layout");
-            }
-            
             progressBar = findViewById(R.id.progressBar);
-            
-            // Kiểm tra bottomNavigation
-            View navView = findViewById(R.id.bottomNavigation); 
-            if (navView != null && navView instanceof BottomNavigationView) {
-                bottomNavigationView = (BottomNavigationView) navView;
-            } else {
-                Log.e(TAG, "Bottom navigation view not found or has wrong type");
-                bottomNavigationView = null;
-            }
-            
-            // Đánh dấu đã khởi tạo thành công nếu các view chính đã được tìm thấy
+            bottomNavigationView = findViewById(R.id.bottomNavigation);
+
+            btnChevronLanguage = findViewById(R.id.btnChevronLanguage);
+            btnChevronAccountInfo = findViewById(R.id.btnChevronAccountInfo);
+            btnChevronPolicy = findViewById(R.id.btnChevronPolicy);
+            btnChevronTerms = findViewById(R.id.btnChevronTerms);
+            btnLogout = findViewById(R.id.btnLogout);
+
+            // Gán View Sign Out (có thể là CardView hoặc Layout bất kỳ)
+            signOutView = findViewById(R.id.cvSignOut);
+
+            // Kiểm tra các View chính đã được gán chưa
             viewsInitialized = (imgUserPhoto != null && tvUsername != null && tvEmail != null);
             return viewsInitialized;
         } catch (Exception e) {
             Log.e(TAG, "Error initializing views: " + e.getMessage(), e);
-            viewsInitialized = false;
             return false;
         }
     }
-    
-    private void setupListeners() {
-        try {
-            if (!viewsInitialized) return;
-            
-            // Chỉ thiết lập listener nếu btnSignOut là Button
-            if (btnSignOut != null) {
-                btnSignOut.setOnClickListener(v -> signOut());
-            }
-            
-            // Tìm các view khác để thiết lập listener nếu cần
-            View cvSignOut = findViewById(R.id.cvSignOut);
-            if (cvSignOut != null && btnSignOut == null) {
-                cvSignOut.setOnClickListener(v -> signOut());
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error setting up listeners: " + e.getMessage(), e);
-        }
-    }
-    
-    private void signOut() {
-        try {
-            FirebaseAuth.getInstance().signOut();
-            safeNavigateToSignIn();
-        } catch (Exception e) {
-            Log.e(TAG, "Error signing out: " + e.getMessage(), e);
-            // Vẫn chuyển hướng đến trang đăng nhập
-            safeNavigateToSignIn();
-        }
-    }
-    
+
     private void setupViewModel() {
-        try {
-            // Khởi tạo ViewModel sau
-            viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
-            
-            // Hiển thị loading indicator trong khi chờ dữ liệu
-            if (progressBar != null) {
-                progressBar.setVisibility(View.VISIBLE);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error initializing ViewModel: " + e.getMessage(), e);
-        }
+        viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
     }
-    
+
     private void loadUserData() {
-        try {
-            // Kiểm tra và hiển thị thông tin người dùng hiện tại từ Firebase Auth
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-            FirebaseUser currentUser = auth.getCurrentUser();
-            
-            if (currentUser != null) {
-                Log.d(TAG, "Current Firebase user: " + currentUser.getEmail());
-                
-                // Kiểm tra từng view trước khi sử dụng để tránh NPE
-                if (tvEmail != null) {
-                    tvEmail.setText(currentUser.getEmail());
-                }
-                
-                if (tvUsername != null) {
-                    if (currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty()) {
-                        tvUsername.setText(currentUser.getDisplayName());
-                    } else {
-                        // Nếu không có display name, hiển thị email
-                        String emailName = currentUser.getEmail();
-                        if (emailName != null && emailName.contains("@")) {
-                            tvUsername.setText(emailName.substring(0, emailName.indexOf("@")));
-                        } else {
-                            tvUsername.setText("Người dùng");
-                        }
-                    }
-                }
-                
-                // Tải ảnh đại diện nếu có
-                if (imgUserPhoto != null) {
-                    if (currentUser.getPhotoUrl() != null) {
-                        try {
-                            Glide.with(this)
-                                    .load(currentUser.getPhotoUrl())
-                                    .placeholder(R.drawable.ic_profile)
-                                    .error(R.drawable.ic_profile)
-                                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                    .circleCrop()
-                                    .into(imgUserPhoto);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error loading Firebase user photo: " + e.getMessage());
-                            imgUserPhoto.setImageResource(R.drawable.ic_profile);
-                        }
-                    } else {
-                        imgUserPhoto.setImageResource(R.drawable.ic_profile);
-                    }
-                }
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            tvEmail.setText(currentUser.getEmail());
+
+            String name = currentUser.getDisplayName();
+            if (name == null || name.isEmpty()) {
+                name = currentUser.getEmail().split("@")[0];
+            }
+            tvUsername.setText(name);
+
+            if (currentUser.getPhotoUrl() != null) {
+                Glide.with(this)
+                        .load(currentUser.getPhotoUrl())
+                        .placeholder(R.drawable.ic_profile)
+                        .error(R.drawable.ic_profile)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .circleCrop()
+                        .into(imgUserPhoto);
             } else {
-                Log.e(TAG, "Current Firebase user is null even though isUserLoggedIn returned true");
-                if (progressBar != null) {
-                    progressBar.setVisibility(View.GONE);
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading user data directly: " + e.getMessage(), e);
-            if (progressBar != null) {
-                progressBar.setVisibility(View.GONE);
-            }
-        }
-    }
-    
-    private void setupObservers() {
-        try {
-            if (viewModel == null) {
-                Log.e(TAG, "Cannot setup observers: viewModel is null");
-                return;
-            }
-            
-            // Observe user data
-            viewModel.getCurrentUser().observe(this, user -> {
-                try {
-                    if (user != null) {
-                        // Hiển thị thông tin người dùng đầy đủ hơn
-                        // Ưu tiên hiển thị displayName nếu có, nếu không thì dùng username
-                        String displayedName = user.getDisplayName();
-                        if (displayedName == null || displayedName.isEmpty()) {
-                            displayedName = user.getUsername();
-                        }
-                        
-                        if (tvUsername != null) {
-                            tvUsername.setText(displayedName);
-                        }
-                        
-                        if (tvEmail != null) {
-                            tvEmail.setText(user.getEmail());
-                        }
-                        
-                        Log.d(TAG, "Loading user profile: username=" + displayedName + ", email=" + user.getEmail());
-                        
-                        // Cải thiện hiển thị ảnh đại diện
-                        if (imgUserPhoto != null) {
-                            if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
-                                try {
-                                    Glide.with(this)
-                                            .load(user.getPhotoUrl())
-                                            .placeholder(R.drawable.ic_profile)
-                                            .error(R.drawable.ic_profile)
-                                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                            .circleCrop()
-                                            .into(imgUserPhoto);
-                                    Log.d(TAG, "Loading profile image from URL: " + user.getPhotoUrl());
-                                } catch (Exception e) {
-                                    Log.e(TAG, "Error loading profile image: " + e.getMessage());
-                                    imgUserPhoto.setImageResource(R.drawable.ic_profile);
-                                }
-                            } else {
-                                Log.d(TAG, "No profile image URL, using default image");
-                                imgUserPhoto.setImageResource(R.drawable.ic_profile);
-                            }
-                        }
-                    } else {
-                        // User signed out
-                        Log.d(TAG, "Current user is null, navigating to sign-in screen");
-                        safeNavigateToSignIn();
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error processing user data: " + e.getMessage(), e);
-                } finally {
-                    if (progressBar != null) {
-                        progressBar.setVisibility(View.GONE);
-                    }
-                }
-            });
-        
-            // Observe loading state
-            viewModel.getIsLoading().observe(this, isLoading -> {
-                try {
-                    if (progressBar != null) {
-                        progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error updating loading state: " + e.getMessage(), e);
-                }
-            });
-        
-            // Observe error messages
-            viewModel.getErrorMessage().observe(this, errorMessage -> {
-                try {
-                    if (errorMessage != null && !errorMessage.isEmpty()) {
-                        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error showing error message: " + e.getMessage(), e);
-                }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Error setting up observers: " + e.getMessage(), e);
-            if (progressBar != null) {
-                progressBar.setVisibility(View.GONE);
+                imgUserPhoto.setImageResource(R.drawable.ic_profile);
             }
         }
     }
 
-    private void setupBottomNavigation() {
-        try {
-            if (bottomNavigationView == null) {
-                Log.e(TAG, "Cannot setup bottom navigation: bottomNavigationView is null");
-                return;
-            }
-            
-            bottomNavigationView.setSelectedItemId(R.id.nav_profile);
-            bottomNavigationView.setOnItemSelectedListener(item -> {
-                try {
-                    int itemId = item.getItemId();
-                    if (itemId == R.id.nav_categories) {
-                        startActivity(new Intent(ProfileActivity.this, CategoriesActivity.class));
-                        finish();
-                        return true;
-                    } else if (itemId == R.id.nav_bookmarks) {
-                        startActivity(new Intent(ProfileActivity.this, BookmarksActivity.class));
-                        finish();
-                        return true;
-                    } else if (itemId == R.id.nav_profile) {
-                        return true;
-                    }
-                    return false;
-                } catch (Exception e) {
-                    Log.e(TAG, "Error in bottom navigation: " + e.getMessage(), e);
-                    return false;
+    private void setupObservers() {
+        viewModel.getCurrentUser().observe(this, user -> {
+            if (user != null) {
+                String displayedName = user.getDisplayName();
+                if (displayedName == null || displayedName.isEmpty()) {
+                    displayedName = user.getUsername();
                 }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Error setting up bottom navigation: " + e.getMessage(), e);
+                tvUsername.setText(displayedName);
+                tvEmail.setText(user.getEmail());
+            }
+        });
+    }
+
+    private void setupListeners() {
+        // Gán listener cho từng icon chức năng
+        btnChevronLanguage.setOnClickListener(v -> startActivity(new Intent(this, ContactActivity.class)));
+        btnChevronAccountInfo.setOnClickListener(v -> startActivity(new Intent(this, AccountInfoActivity.class)));
+        btnChevronPolicy.setOnClickListener(v -> startActivity(new Intent(this, ProfilePolicyActivity.class)));
+        btnChevronTerms.setOnClickListener(v -> startActivity(new Intent(this, ProfileTermsActivity.class)));
+
+        // Gán listener cho nút logout hình icon
+        btnLogout.setOnClickListener(v -> signOut());
+
+        // Gán listener cho layout hoặc button Sign Out
+        if (signOutView != null) {
+            signOutView.setOnClickListener(v -> signOut());
         }
+    }
+
+    private void signOut() {
+        Log.d(TAG, "Signing out...");
+        FirebaseAuth.getInstance().signOut();
+        safeNavigateToSignIn();
     }
 
     private void safeNavigateToSignIn() {
-        try {
-            // Prevent multiple navigation attempts
-            if (isNavigating) {
-                return;
-            }
-            isNavigating = true;
-            
-            Log.d(TAG, "Navigating to SignInActivity");
-            
-            // Phương pháp 1: Intent thông thường
-            Intent intent = new Intent(ProfileActivity.this, SignInActivity.class);
-            startActivity(intent);
-            finish();
-        } catch (Exception e) {
-            Log.e(TAG, "Error with normal intent navigation: " + e.getMessage(), e);
-            
-            try {
-                // Phương pháp 2: Intent với tên lớp đầy đủ
-                Intent intent = new Intent();
-                intent.setClassName(getPackageName(), "com.example.appdocbao.ui.auth.SignInActivity");
-                startActivity(intent);
-                finish();
-            } catch (Exception e2) {
-                Log.e(TAG, "Error with explicit class name intent: " + e2.getMessage(), e2);
-                
-                try {
-                    // Phương pháp cuối cùng: Trở về màn hình chính
-                    Intent homeIntent = new Intent(this, CategoriesActivity.class);
-                    startActivity(homeIntent);
-                    Toast.makeText(this, "Không thể chuyển đến trang đăng nhập", Toast.LENGTH_SHORT).show();
-                    finish();
-                } catch (Exception e3) {
-                    Log.e(TAG, "Fatal error navigating: " + e3.getMessage(), e3);
-                    // Just finish if all else fails
-                    finish();
-                }
-            }
-        }
+        Log.d(TAG, "Navigating to SignInActivity");
+        Intent intent = new Intent(ProfileActivity.this, SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
-} 
+}

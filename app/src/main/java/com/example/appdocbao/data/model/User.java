@@ -99,4 +99,4 @@ public class User {
     public boolean hasBookmarked(String articleId) {
         return bookmarkedArticles != null && bookmarkedArticles.contains(articleId);
     }
-} 
+}

@@ -33,6 +33,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -40,8 +43,11 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
+    // Import Database
     implementation("de.hdodenhof:circleimageview:3.1.0")
-    
+
+    implementation("com.google.firebase:firebase-database:21.0.0")
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
     
@@ -70,6 +76,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime:2.7.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("org.jsoup:jsoup:1.17.2")
+    implementation(libs.firebase.database)
+    implementation(libs.navigation.fragment)
+    implementation(libs.navigation.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

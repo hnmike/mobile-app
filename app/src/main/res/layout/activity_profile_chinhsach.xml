@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    tools:ignore="ExtraText">
+    tools:context=".ui.profile.ProfilePolicyActivity">
 
     <!-- Nút quay lại -->
     <ImageView
@@ -18,32 +18,37 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-
-    <!-- Nội dung chính sách -->
-
+    <!-- Tiêu đề -->
     <TextView
         android:id="@+id/textView"
-        android:layout_width="361dp"
-        android:layout_height="27dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
         android:text="CHÍNH SÁCH BẢO MẬT"
         android:textSize="20sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/textView2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:lineSpacingExtra="6dp"
-        android:justificationMode="inter_word"
-        android:text="1. Giới thiệu
+    <!-- ScrollView chứa nội dung chính sách -->
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/textView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="6dp"
+            android:textSize="16sp"
+            android:text="1. Giới thiệu
 \n      Ứng dụng là một nền tảng tổng hợp và phân phối nội dung tin tức từ nhiều nguồn khác nhau. Chúng tôi cam kết cung cấp thông tin nhanh chóng, chính xác và đa chiều cho người dùng.
 
 \n      Việc sử dụng ứng dụng đồng nghĩa với việc bạn đã đọc, hiểu và đồng ý tuân thủ các chính sách dưới đây.
@@ -62,11 +67,9 @@
 \n4. Nội dung và Bản quyền
 \n      Nội dung hiển thị trong ứng dụng có thể đến từ các đối tác, nguồn báo điện tử chính thống.
 
-\n      Mọi nội dung đều tuân thủ luật bản quyền."
-        android:scrollbars="vertical"
-        app:layout_constraintTop_toBottomOf="@id/textView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+\n      Mọi nội dung đều tuân thủ luật bản quyền.">
+
+        </TextView>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

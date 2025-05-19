@@ -37,8 +37,8 @@
 
     <TextView
         android:id="@+id/textView4"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="370dp"
+        android:layout_height="650dp"
         android:justificationMode="inter_word"
         android:lineSpacingExtra="6dp"
         android:scrollbars="vertical"
@@ -62,14 +62,7 @@
 
 \n      Bạn có thể yêu cầu xóa tài khoản hoặc thông tin cá nhân bất cứ lúc nào.
 
-\n4. Nội dung và bản quyền
-\n      Tất cả nội dung hiển thị trên ứng dụng đến từ các nguồn báo điện tử có bản quyền hoặc đối tác hợp pháp.
-
-\n      Người dùng không được sao chép, tái sử dụng nội dung vì mục đích thương mại nếu không được sự đồng ý của nguồn cung cấp.
-
-\n      Mọi vi phạm sẽ bị xử lý theo quy định của pháp luật và/hoặc chấm dứt quyền sử dụng ứng dụng.
-
-\n5. Cập nhật điều khoản
+\n4. Cập nhật điều khoản
 \n      Ứng dụng có quyền sửa đổi điều khoản sử dụng bất kỳ lúc nào mà không cần thông báo trước.
 
 \n      Người dùng có trách nhiệm theo dõi và cập nhật điều khoản mới."
@@ -77,7 +70,7 @@
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.444"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView3"
         app:layout_constraintVertical_bias="0.0" />

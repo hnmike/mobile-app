@@ -15,42 +15,66 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppDocBao"
-        tools:targetApi="31">
+        android:theme="@style/Theme.AppDocBao">
+
         <activity
             android:name=".ui.account"
             android:exported="false"
             android:theme="@style/Theme.AppDocBao" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ui.auth.SignInActivity"
             android:exported="true" />
+
         <activity
             android:name=".ui.auth.SignUpActivity"
             android:exported="false" />
+
         <activity
             android:name=".ui.categories.CategoriesActivity"
             android:exported="false" />
+
         <activity
             android:name=".ui.newslist.NewsListActivity"
             android:exported="false" />
+
         <activity
             android:name=".ui.newsdetail.NewsDetailActivity"
             android:exported="false" />
+
         <activity
             android:name=".ui.bookmarks.BookmarksActivity"
             android:exported="false" />
+
         <activity
             android:name=".ui.profile.ProfileActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".ui.profile.AccountInfoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.profile.ProfilePolicyActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.profile.ProfileTermsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.profile.ContactActivity"
+            android:exported="false" />
+
+
     </application>
 
 </manifest>

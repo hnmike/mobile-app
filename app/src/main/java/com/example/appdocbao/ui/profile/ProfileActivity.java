@@ -69,6 +69,7 @@ public class ProfileActivity extends AppCompatActivity {
         loadUserData();
         setupObservers();
         setupListeners();
+        setupBottomNavigation();
     }
 
     private boolean isUserLoggedIn() {
@@ -158,6 +159,35 @@ public class ProfileActivity extends AppCompatActivity {
         if (signOutView != null) {
             signOutView.setOnClickListener(v -> signOut());
         }
+    }
+
+    private void setupBottomNavigation() {
+        bottomNavigationView.setSelectedItemId(R.id.nav_profile);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            try {
+                int itemId = item.getItemId();
+                if (itemId == R.id.nav_home) {
+                    Intent intent = new Intent(ProfileActivity.this, com.example.appdocbao.ui.home.HomeActivity.class);
+                    startActivity(intent);
+                    finish();
+                    return true;
+                } else if (itemId == R.id.nav_categories) {
+                    startActivity(new Intent(ProfileActivity.this, CategoriesActivity.class));
+                    finish();
+                    return true;
+                } else if (itemId == R.id.nav_bookmarks) {
+                    startActivity(new Intent(ProfileActivity.this, BookmarksActivity.class));
+                    finish();
+                    return true;
+                } else if (itemId == R.id.nav_profile) {
+                    return true;
+                }
+                return false;
+            } catch (Exception e) {
+                Log.e(TAG, "Error in navigation: " + e.getMessage(), e);
+                return false;
+            }
+        });
     }
 
     private void signOut() {

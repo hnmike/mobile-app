@@ -76,7 +76,9 @@
         <activity
             android:name=".ui.profile.ContactActivity"
             android:exported="false" />
-
+        <activity
+            android:name=".ui.profile.ChangePasswordActivity"
+            android:exported="false" />
 
     </application>
 

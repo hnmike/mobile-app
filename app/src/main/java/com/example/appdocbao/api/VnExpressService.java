@@ -1,0 +1,19 @@
+package com.example.appdocbao.api;
+
+import com.example.appdocbao.data.model.Article;
+import retrofit2.Call;
+import retrofit2.http.GET;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
+import retrofit2.http.Url;
+
+import java.util.List;
+
+public interface VnExpressService {
+    
+    // Since VnExpress doesn't have an open API, we'll use a custom parser to scrape the website
+    // This is just a placeholder for the structure
+    
+    @GET
+    Call<String> getHtmlContent(@Url String url);
+} 

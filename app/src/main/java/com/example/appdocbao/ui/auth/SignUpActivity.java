@@ -202,7 +202,6 @@ public class SignUpActivity extends AppCompatActivity {
     private void returnToSignIn() {
         try {
             Log.d(TAG, "Registration successful, returning to SignInActivity");
-            
             // Show success message
             Toast.makeText(SignUpActivity.this, "Đăng ký thành công! Vui lòng đăng nhập.", Toast.LENGTH_SHORT).show();
             

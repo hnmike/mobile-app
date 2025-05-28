@@ -149,8 +149,7 @@ public class AuthRepository {
                             fetchUserData(firebaseUser.getUid());
                         }
                     } else {
-                        errorMessage.setValue(task.getException() != null ? 
-                                task.getException().getMessage() : "Sign in failed");
+                        errorMessage.setValue("Sign in failed");
                         Log.e(TAG, "signIn: ", task.getException());
                     }
                 });

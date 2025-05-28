@@ -7,15 +7,6 @@ plugins {
 }
 buildscript {
     dependencies {
-        classpath("com.google.gms:google-services:4.4.2")
-    }
-}
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url = uri("https://maven.facebook.com")
-        }
+        classpath("com.google.gms:google-services:4.4.0")
     }
 }

@@ -23,6 +23,11 @@ public class VnExpressParser {
     public static final String BASE_URL = "https://vnexpress.net";
     private static final Map<String, String> CATEGORY_MAP = initCategoryMap();
 
+    /**
+     * Initializes and returns a map of VnExpress category URL slugs to their Vietnamese names.
+     *
+     * @return a map where keys are category IDs (slugs) and values are their corresponding Vietnamese names
+     */
     private static Map<String, String> initCategoryMap() {
         Map<String, String> map = new HashMap<>();
         map.put("thoi-su", "Thời sự");
@@ -43,6 +48,11 @@ public class VnExpressParser {
         return map;
     }
 
+    /****
+     * Returns a list of news categories available on VnExpress, each with an associated emoji and description.
+     *
+     * @return a list of Category objects representing VnExpress news categories
+     */
     public static List<Category> parseCategories() {
         List<Category> categories = new ArrayList<>();
         
@@ -73,6 +83,17 @@ public class VnExpressParser {
         return categories;
     }
 
+    /****
+     * Parses a list of articles from the provided HTML content for a specific category.
+     *
+     * Attempts to extract article elements using multiple CSS selectors to maximize compatibility with different page layouts.
+     * Each article element is parsed into an Article object; invalid or incomplete articles are skipped.
+     * Returns an empty list if the HTML is null, empty, or no articles are found.
+     *
+     * @param html the HTML content containing articles
+     * @param categoryId the identifier for the news category
+     * @return a list of parsed Article objects, or an empty list if none are found
+     */
     public static List<Article> parseArticlesByCategory(String html, String categoryId) {
         List<Article> articles = new ArrayList<>();
         
@@ -119,6 +140,16 @@ public class VnExpressParser {
         return articles;
     }
     
+    /**
+     * Parses an article HTML element into an {@link Article} object for a given category.
+     *
+     * Extracts the article's title, source URL, image URL (with fallback selectors and normalization), and description snippet.
+     * Returns null if required elements are missing or an error occurs during parsing.
+     *
+     * @param articleElement the Jsoup HTML element representing the article
+     * @param categoryId the category ID associated with the article
+     * @return an {@link Article} object with extracted data, or null if parsing fails
+     */
     public static Article parseArticleElement(Element articleElement, String categoryId) {
         try {
             // Extract title and URL
@@ -188,6 +219,16 @@ public class VnExpressParser {
         }
     }
     
+    /**
+     * Parses detailed information for a single article from the provided HTML string.
+     *
+     * Extracts the article's title, main image URL (with fallback selectors), and full content paragraphs.
+     * Returns an {@link Article} object containing the parsed details, or null if required elements are missing or parsing fails.
+     *
+     * @param html the HTML content of the article detail page
+     * @param categoryId the category ID associated with the article
+     * @return an {@link Article} object with detailed content, or null if parsing fails
+     */
     public static Article parseArticleDetail(String html, String categoryId) {
         try {
             Document doc = Jsoup.parse(html);
@@ -258,6 +299,13 @@ public class VnExpressParser {
         }
     }
     
+    /**
+     * Fetches and parses the latest articles from the VnExpress homepage.
+     *
+     * Connects to the homepage, extracts up to 20 recent articles, and attempts to determine each article's category.
+     *
+     * @return a list of the latest parsed Article objects, or an empty list if fetching or parsing fails
+     */
     public static List<Article> fetchLatestArticles() {
         List<Article> articles = new ArrayList<>();
         

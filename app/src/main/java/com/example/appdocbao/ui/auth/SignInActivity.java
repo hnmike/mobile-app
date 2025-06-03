@@ -45,6 +45,11 @@ public class SignInActivity extends AppCompatActivity {
     private GoogleSignInClient googleSignInClient;
     private CallbackManager callbackManager;
 
+    /**
+     * Initializes the SignInActivity, setting up the user interface, authentication methods, click listeners, and LiveData observers for user authentication.
+     *
+     * @param savedInstanceState the previously saved state of the activity, or null if none
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +81,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Initializes and assigns UI components for the sign-in screen.
+     *
+     * @throws Exception if any required view cannot be found or assigned
+     */
     private void initializeViews() {
         try {
             etEmail = findViewById(R.id.etEmail);
@@ -92,6 +102,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Initializes the AuthViewModel instance for managing authentication logic.
+     *
+     * @throws Exception if the ViewModel cannot be instantiated
+     */
     private void setupViewModel() {
         try {
             viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
@@ -101,6 +116,9 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Configures Google Sign-In options and initializes the GoogleSignInClient for authentication.
+     */
     private void setupGoogleSignIn() {
         try {
             // Set up Google Sign In
@@ -114,6 +132,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Configures Facebook Login integration and registers callbacks for authentication results.
+     *
+     * Sets up the Facebook CallbackManager and registers a callback to handle successful login, cancellation, and errors during the Facebook sign-in process.
+     */
     private void setupFacebookSignIn() {
         try {
             // Set up Facebook Sign In
@@ -140,6 +163,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Assigns click listeners to sign-in, Google, Facebook, forgot password, and sign-up UI elements.
+     *
+     * Handles user interactions for authentication and navigation actions on the sign-in screen.
+     */
     private void setupClickListeners() {
         try {
             btnSignIn.setOnClickListener(v -> signIn());
@@ -152,6 +180,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Sets up LiveData observers for authentication state, loading status, error messages, and input validation errors.
+     *
+     * Updates the UI and navigates after successful login, displays loading overlays, shows error toasts, and triggers field validation as needed.
+     */
     private void setupObservers() {
         try {
             // Observe user authentication state
@@ -187,6 +220,12 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
+    /****
+     * Initiates the email and password sign-in process using the provided input fields.
+     *
+     * Retrieves the user's email and password from the input fields, trims whitespace, and delegates authentication to the ViewModel.
+     * Displays an error message if sign-in fails due to an exception.
+     */
     private void signIn() {
         try {
             String email = etEmail.getText().toString().trim();
@@ -200,6 +239,9 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Validates the email and password input fields, displaying error messages if either field is empty.
+     */
     private void validateFields() {
         try {
             String email = etEmail.getText().toString().trim();
@@ -217,6 +259,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
+    /****
+     * Initiates the Google Sign-In flow by launching the Google sign-in intent.
+     *
+     * Displays a toast message if the sign-in process cannot be started.
+     */
     private void signInWithGoogle() {
         try {
             Intent signInIntent = googleSignInClient.getSignInIntent();
@@ -227,6 +274,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Initiates the Facebook login flow, requesting email and public profile permissions.
+     *
+     * Displays a toast message if the login process cannot be started.
+     */
     private void signInWithFacebook() {
         try {
             LoginManager.getInstance().logInWithReadPermissions(this, Arrays.asList("email", "public_profile"));
@@ -236,6 +288,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Passes the provided Facebook access token to the ViewModel for authentication.
+     *
+     * @param token the Facebook access token to be used for sign-in
+     */
     private void handleFacebookAccessToken(AccessToken token) {
         try {
             viewModel.signInWithFacebook(token);
@@ -244,6 +301,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
+    /****
+     * Launches the sign-up activity for user registration.
+     *
+     * Navigates to the sign-up screen. If navigation fails, displays an error message to the user.
+     */
     private void navigateToSignUp() {
         try {
             Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
@@ -254,6 +316,11 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Navigates to the profile screen after a successful login, with a fallback to the categories screen if navigation fails.
+     *
+     * If both navigation attempts fail, displays a toast message to inform the user.
+     */
     private void navigateAfterLogin() {
         try {
             Log.d(TAG, "Navigating after successful login");
@@ -279,6 +346,15 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Handles the result from external authentication activities such as Google Sign-In and Facebook Login.
+     *
+     * Processes the result intent for Facebook and Google authentication flows, forwarding successful credentials to the ViewModel for sign-in.
+     *
+     * @param requestCode the integer request code originally supplied to startActivityForResult
+     * @param resultCode the integer result code returned by the child activity
+     * @param data the intent data returned by the child activity
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

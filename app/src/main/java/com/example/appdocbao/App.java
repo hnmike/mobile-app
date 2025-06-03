@@ -9,6 +9,13 @@ public class App extends Application {
     
     private static final String TAG = "AppDocBao";
     
+    /**
+     * Initializes Firebase when the application starts, logging configuration details and validating the API key.
+     *
+     * This method ensures Firebase is initialized only once, logs key Firebase configuration parameters,
+     * and performs validation checks on the API key to help detect misconfiguration. Any exceptions during
+     * initialization or configuration retrieval are caught and logged.
+     */
     @Override
     public void onCreate() {
         super.onCreate();

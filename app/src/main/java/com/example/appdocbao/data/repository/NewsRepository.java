@@ -44,6 +44,11 @@ public class NewsRepository {
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
+    /****
+     * Initializes the NewsRepository with Firestore, Retrofit service, executor service, and application context, and triggers initial category loading.
+     *
+     * @param context the application context used for network and resource access
+     */
     private NewsRepository(Context context) {
         this.firestore = FirebaseFirestore.getInstance();
         this.vnExpressService = RetrofitClient.getVnExpressService();
@@ -54,6 +59,12 @@ public class NewsRepository {
         loadCategories();
     }
 
+    /**
+     * Returns the singleton instance of NewsRepository, initializing it if necessary.
+     *
+     * @param context the application context used for initialization
+     * @return the singleton NewsRepository instance
+     */
     public static synchronized NewsRepository getInstance(Context context) {
         if (instance == null) {
             instance = new NewsRepository(context.getApplicationContext());
@@ -61,31 +72,74 @@ public class NewsRepository {
         return instance;
     }
 
+    /**
+     * Returns a LiveData stream of news categories.
+     *
+     * The LiveData emits updates when the list of categories changes, allowing observers to reactively update the UI.
+     *
+     * @return LiveData containing the current list of news categories
+     */
     public LiveData<List<Category>> getCategories() {
         return categories;
     }
 
+    /**
+     * Returns a LiveData stream of the current list of articles.
+     *
+     * The list is updated when articles are loaded from the network or cache.
+     *
+     * @return LiveData containing the list of articles.
+     */
     public LiveData<List<Article>> getArticles() {
         return articles;
     }
     
+    /**
+     * Returns a LiveData stream of articles bookmarked by the current user.
+     *
+     * The list is updated whenever the user's bookmarked articles change in Firestore.
+     *
+     * @return LiveData containing the list of bookmarked articles.
+     */
     public LiveData<List<Article>> getBookmarkedArticles() {
         return bookmarkedArticles;
     }
     
+    /**
+     * Returns a LiveData stream representing the currently selected article.
+     *
+     * Observers can use this to receive updates when the selected article changes, including after loading article details or updating bookmark status.
+     *
+     * @return LiveData containing the selected Article, or null if none is selected
+     */
     public LiveData<Article> getSelectedArticle() {
         return selectedArticle;
     }
     
+    /**
+     * Returns a LiveData indicating whether a data loading operation is currently in progress.
+     *
+     * @return LiveData that is true if loading is ongoing, false otherwise
+     */
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
     }
     
+    /**
+     * Returns a LiveData stream containing the latest error message related to news data operations.
+     *
+     * @return LiveData emitting error messages for UI observation
+     */
     public LiveData<String> getErrorMessage() {
         return errorMessage;
     }
 
-    // Load categories from Firestore (or create them if they don't exist)
+    /**
+     * Loads news categories from Firestore and updates the observable categories list.
+     *
+     * If no categories are found in Firestore or the fetch fails, categories are parsed and created from the VnExpress source.
+     * Sets an error message if the network is unavailable.
+     */
     public void loadCategories() {
         if (!NetworkUtils.isNetworkAvailable(context)) {
             errorMessage.setValue("Không có kết nối internet");
@@ -123,7 +177,11 @@ public class NewsRepository {
                 });
     }
 
-    // Create categories in Firestore
+    /****
+     * Parses news categories from the VnExpress source and saves them to Firestore.
+     *
+     * Updates the categories LiveData with the parsed list and persists each category in the Firestore categories collection.
+     */
     private void createCategories() {
         executorService.execute(() -> {
             List<Category> categoryList = VnExpressParser.parseCategories();
@@ -139,7 +197,13 @@ public class NewsRepository {
         });
     }
 
-    // Load articles for a specific category from VnExpress
+    /**
+     * Loads articles for the specified category from VnExpress and updates the articles LiveData.
+     *
+     * If the network is unavailable or an error occurs during fetching or parsing, attempts to load articles from the local Firestore cache. Updates loading and error state LiveData as appropriate.
+     *
+     * @param categoryId the identifier of the category to load articles for
+     */
     public void loadArticlesByCategory(String categoryId) {
         try {
             if (!NetworkUtils.isNetworkAvailable(context)) {
@@ -155,6 +219,11 @@ public class NewsRepository {
             
             String url = VnExpressParser.BASE_URL + "/" + categoryId;
             vnExpressService.getHtmlContent(url).enqueue(new Callback<String>() {
+                /**
+                 * Handles the Retrofit response for fetching articles by category, updating LiveData with parsed articles or error messages.
+                 *
+                 * On a successful response, parses the HTML to extract articles, updates the articles LiveData, checks bookmark status, and caches the articles. If parsing fails or the article list is empty, sets an error message and loads cached articles. On unsuccessful response, sets an error message and loads cached articles.
+                 */
                 @Override
                 public void onResponse(Call<String> call, Response<String> response) {
                     isLoading.postValue(false);
@@ -192,6 +261,13 @@ public class NewsRepository {
                     }
                 }
 
+                /**
+                 * Handles network failure when loading articles by category by updating loading and error states,
+                 * logging the error, and attempting to load articles from the local cache.
+                 *
+                 * @param call the Retrofit call that failed
+                 * @param t the throwable representing the failure
+                 */
                 @Override
                 public void onFailure(Call<String> call, Throwable t) {
                     isLoading.postValue(false);
@@ -211,7 +287,14 @@ public class NewsRepository {
         }
     }
 
-    // Load articles from Firestore cache
+    /**
+     * Loads articles for the specified category from the Firestore cache and updates the articles LiveData.
+     *
+     * If cached articles are found, updates the articles list and checks their bookmark status.
+     * If no articles are found or an error occurs, sets an appropriate error message.
+     *
+     * @param categoryId the ID of the category for which to load cached articles
+     */
     private void loadArticlesFromCache(String categoryId) {
         firestore.collection(Constants.COLLECTION_ARTICLES)
                 .whereEqualTo("categoryId", categoryId)
@@ -240,7 +323,11 @@ public class NewsRepository {
                 });
     }
 
-    // Load latest articles from VnExpress homepage
+    /**
+     * Loads the latest articles from the VnExpress homepage, updates the articles LiveData, checks bookmark status, and caches the results.
+     *
+     * If there is no network connection, sets an error message and aborts the operation.
+     */
     public void loadLatestArticles() {
         if (!NetworkUtils.isNetworkAvailable(context)) {
             errorMessage.setValue("Không có kết nối internet");
@@ -268,7 +355,13 @@ public class NewsRepository {
         });
     }
 
-    // Load article detail from VnExpress
+    /**
+     * Loads detailed information for a specific article by its ID.
+     *
+     * Retrieves the article from Firestore and updates the selected article LiveData. If the article exists and network is available, fetches the full content from the article's source URL. Updates loading and error state LiveData as appropriate.
+     *
+     * @param articleId the unique identifier of the article to load
+     */
     public void loadArticleDetail(String articleId) {
         isLoading.setValue(true);
         Log.d(TAG, "Loading article detail for ID: " + articleId);
@@ -321,7 +414,15 @@ public class NewsRepository {
         }
     }
     
-    // Fetch full article content from VnExpress
+    /**
+     * Retrieves the full content of an article from its source URL, parses the HTML to extract detailed content,
+     * updates the selected article LiveData, and caches the updated article in Firestore.
+     *
+     * If the source URL is missing or invalid, the operation is aborted. Network and parsing errors are logged,
+     * and the loading state is updated accordingly.
+     *
+     * @param article the article for which to fetch and update full content
+     */
     private void fetchFullArticleContent(Article article) {
         try {
             String url = article.getSourceUrl();
@@ -333,6 +434,12 @@ public class NewsRepository {
             
             // Set a timeout for the request to prevent ANR
             vnExpressService.getHtmlContent(url).enqueue(new Callback<String>() {
+                /**
+                 * Handles the Retrofit response for fetching full article content, parses the HTML in a background thread,
+                 * updates the selected article LiveData, and caches the updated article if parsing succeeds.
+                 *
+                 * If the response is unsuccessful or parsing fails, logs the error and retains the original article.
+                 */
                 @Override
                 public void onResponse(Call<String> call, Response<String> response) {
                     try {
@@ -373,6 +480,9 @@ public class NewsRepository {
                     }
                 }
 
+                /**
+                 * Handles network request failures when fetching article content, updating loading state and logging the error.
+                 */
                 @Override
                 public void onFailure(Call<String> call, Throwable t) {
                     try {
@@ -389,7 +499,15 @@ public class NewsRepository {
         }
     }
     
-    // Extract article content directly without using VnExpressParser
+    /**
+     * Parses the provided HTML to extract detailed article content and image URL, returning an updated copy of the original article.
+     *
+     * If extraction fails or the HTML is empty, returns the original article unchanged.
+     *
+     * @param html the HTML string containing the article's full content
+     * @param originalArticle the original Article object to update
+     * @return a new Article object with updated content and image URL if extraction succeeds; otherwise, the original article
+     */
     private Article extractArticleContent(String html, Article originalArticle) {
         try {
             if (html == null || html.isEmpty()) {
@@ -455,14 +573,22 @@ public class NewsRepository {
         }
     }
 
-    // Cache articles in Firestore
+    /**
+     * Caches a list of articles in Firestore by saving each article individually.
+     *
+     * @param articles the list of articles to cache
+     */
     private void cacheArticles(List<Article> articles) {
         for (Article article : articles) {
             cacheArticle(article);
         }
     }
     
-    // Cache a single article in Firestore
+    /**
+     * Saves the specified article to Firestore for caching.
+     *
+     * @param article the article to be cached
+     */
     private void cacheArticle(Article article) {
         firestore.collection(Constants.COLLECTION_ARTICLES)
                 .document(article.getId())
@@ -470,7 +596,11 @@ public class NewsRepository {
                 .addOnFailureListener(e -> Log.e(TAG, "cacheArticle: ", e));
     }
 
-    // Load bookmarked articles for current user
+    /**
+     * Loads the list of articles bookmarked by the currently authenticated user.
+     *
+     * If the user is not logged in, sets an error message. Otherwise, retrieves the user's bookmarked article IDs from Firestore and loads the corresponding articles. Updates the bookmarked articles LiveData or sets it to an empty list if none are found.
+     */
     public void loadBookmarkedArticles() {
         String userId = getCurrentUserId();
         if (userId == null) {
@@ -507,7 +637,11 @@ public class NewsRepository {
                 });
     }
 
-    // Load articles from Firestore by IDs
+    /****
+     * Loads articles from Firestore based on a list of article IDs and updates the bookmarked articles LiveData.
+     *
+     * Each retrieved article is marked as bookmarked. When all articles have been processed, the loading state is updated and the bookmarked articles list is set.
+     */
     private void loadArticlesByIds(List<String> articleIds) {
         List<Article> articles = new ArrayList<>();
         final int[] remaining = {articleIds.size()};
@@ -545,7 +679,13 @@ public class NewsRepository {
         }
     }
 
-    // Bookmark/unbookmark an article
+    /**
+     * Toggles the bookmark status of the specified article for the current user.
+     *
+     * If the user is not logged in, sets an error message. Otherwise, adds or removes the article from the user's bookmarked articles in Firestore and updates the article's bookmark status accordingly.
+     *
+     * @param article the article whose bookmark status is to be toggled
+     */
     public void toggleBookmark(Article article) {
         String userId = getCurrentUserId();
         if (userId == null) {
@@ -595,7 +735,12 @@ public class NewsRepository {
                 });
     }
 
-    // Check if articles are bookmarked
+    /**
+     * Updates the bookmarked status of each article in the provided list based on the current user's bookmarked articles.
+     *
+     * If the user is not logged in, the method returns without making changes.
+     * The articles' bookmarked flags are updated and the articles LiveData is refreshed accordingly.
+     */
     private void checkBookmarkedStatus(List<Article> articleList) {
         String userId = getCurrentUserId();
         if (userId == null) return;
@@ -620,7 +765,11 @@ public class NewsRepository {
                 .addOnFailureListener(e -> Log.e(TAG, "checkBookmarkedStatus: ", e));
     }
 
-    // Check if a single article is bookmarked
+    /**
+     * Updates the bookmark status of the given article for the current user and posts the result to selectedArticle LiveData.
+     *
+     * If the user is not logged in, the method returns without making changes.
+     */
     private void checkBookmarkStatusForArticle(Article article) {
         String userId = getCurrentUserId();
         if (userId == null) return;
@@ -640,7 +789,11 @@ public class NewsRepository {
                 .addOnFailureListener(e -> Log.e(TAG, "checkBookmarkStatusForArticle: ", e));
     }
 
-    // Get current user ID
+    /****
+     * Retrieves the unique identifier of the currently authenticated user.
+     *
+     * @return the user ID if a user is logged in; otherwise, null
+     */
     private String getCurrentUserId() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
@@ -649,7 +802,13 @@ public class NewsRepository {
         return null;
     }
 
-    // Add a bookmark
+    /****
+     * Adds the specified article to the current user's list of bookmarked articles in Firestore.
+     *
+     * If the user is not logged in, sets an error message. Updates the selected article's bookmark status upon success.
+     *
+     * @param articleId the ID of the article to bookmark
+     */
     public void addBookmark(String articleId) {
         String userId = getCurrentUserId();
         if (userId == null) {
@@ -679,7 +838,13 @@ public class NewsRepository {
                 });
     }
 
-    // Remove a bookmark
+    /**
+     * Removes the specified article from the current user's list of bookmarked articles.
+     *
+     * If the user is not logged in, sets an error message. Updates the bookmark status of the selected article upon success.
+     *
+     * @param articleId the ID of the article to remove from bookmarks
+     */
     public void removeBookmark(String articleId) {
         String userId = getCurrentUserId();
         if (userId == null) {
@@ -709,7 +874,13 @@ public class NewsRepository {
                 });
     }
 
-    // Get the bookmark status for the current article
+    /**
+     * Returns a LiveData indicating whether the currently selected article is bookmarked by the current user.
+     *
+     * The result is updated asynchronously based on the user's bookmarked articles stored in Firestore.
+     *
+     * @return LiveData<Boolean> representing the bookmark status of the selected article for the current user
+     */
     public LiveData<Boolean> getIsArticleBookmarked() {
         MutableLiveData<Boolean> isBookmarked = new MutableLiveData<>(false);
         

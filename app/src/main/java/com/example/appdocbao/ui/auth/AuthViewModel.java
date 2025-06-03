@@ -24,6 +24,11 @@ public class AuthViewModel extends AndroidViewModel {
     private final LiveData<String> errorMessage;
     private final MutableLiveData<Boolean> validationErrors = new MutableLiveData<>();
 
+    /**
+     * Initializes the AuthViewModel and sets up LiveData fields for authentication state and operations.
+     *
+     * @param application the application context used to initialize the authentication repository
+     */
     public AuthViewModel(@NonNull Application application) {
         super(application);
         authRepository = AuthRepository.getInstance(application);
@@ -32,22 +37,51 @@ public class AuthViewModel extends AndroidViewModel {
         errorMessage = authRepository.getErrorMessage();
     }
 
+    /**
+     * Returns a LiveData object representing the currently authenticated user.
+     *
+     * @return LiveData containing the current User, or null if no user is authenticated
+     */
     public LiveData<User> getCurrentUser() {
         return currentUser;
     }
 
+    /**
+     * Returns a LiveData indicating whether an authentication operation is currently in progress.
+     *
+     * @return LiveData that is true if an authentication process is ongoing, false otherwise
+     */
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
     }
 
+    /**
+     * Returns a LiveData object containing error messages from authentication operations.
+     *
+     * @return LiveData holding the latest authentication error message, or null if no error.
+     */
     public LiveData<String> getErrorMessage() {
         return errorMessage;
     }
 
+    /**
+     * Returns a LiveData indicating whether there are validation errors in the authentication input fields.
+     *
+     * @return LiveData that is true if validation errors are present, false otherwise
+     */
     public LiveData<Boolean> getValidationErrors() {
         return validationErrors;
     }
 
+    /**
+     * Attempts to sign in a user with the provided email and password.
+     *
+     * Performs input validation for non-empty fields and valid email format before delegating authentication to the repository.
+     * Sets validation error state if input is invalid.
+     *
+     * @param email the user's email address
+     * @param password the user's password
+     */
     public void signIn(String email, String password) {
         // Validate inputs
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
@@ -64,6 +98,16 @@ public class AuthViewModel extends AndroidViewModel {
         authRepository.signIn(email, password);
     }
 
+    /**
+     * Attempts to register a new user with the provided username, email, password, and confirmation password.
+     *
+     * Performs input validation for all fields. If validation fails, sets a validation error flag and aborts the sign-up process. If validation succeeds, delegates user creation to the authentication repository.
+     *
+     * @param username the desired username for the new account
+     * @param email the user's email address
+     * @param password the user's chosen password
+     * @param confirmPassword confirmation of the chosen password
+     */
     public void signUp(String username, String email, String password, String confirmPassword) {
         // Clear previous validation errors
         validationErrors.setValue(false);
@@ -109,22 +153,40 @@ public class AuthViewModel extends AndroidViewModel {
         authRepository.signUp(username, email, password);
     }
 
+    /**
+     * Initiates sign-in using a Google account if the provided account is not null.
+     *
+     * @param account the GoogleSignInAccount to authenticate with
+     */
     public void signInWithGoogle(GoogleSignInAccount account) {
         if (account != null) {
             authRepository.signInWithGoogle(account);
         }
     }
 
+    /**
+     * Initiates sign-in using a Facebook access token if the token is not null.
+     *
+     * @param accessToken the Facebook access token to authenticate the user
+     */
     public void signInWithFacebook(AccessToken accessToken) {
         if (accessToken != null) {
             authRepository.signInWithFacebook(accessToken);
         }
     }
 
+    /****
+     * Signs out the currently authenticated user.
+     */
     public void signOut() {
         authRepository.signOut();
     }
 
+    /**
+     * Returns whether a user is currently authenticated.
+     *
+     * @return true if a user is logged in; false otherwise
+     */
     public boolean isLoggedIn() {
         return authRepository.isLoggedIn();
     }

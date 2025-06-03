@@ -28,6 +28,13 @@ public class MainActivity extends AppCompatActivity {
     private Button btnGetStarted;
     private AuthViewModel authViewModel;
 
+    /**
+     * Initializes the main activity, sets up the splash screen UI, and performs Firebase configuration checks.
+     *
+     * Sets the content view, initializes the authentication ViewModel, configures the "Get Started" button to navigate to the next screen, and invokes diagnostic checks for Firebase Authentication and the google-services.json configuration file.
+     *
+     * @param savedInstanceState the previously saved instance state, if any
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
         checkGoogleServicesJson();
     }
 
+    /**
+     * Navigates from the splash screen to the HomeActivity and closes MainActivity to prevent returning to it.
+     */
     private void navigateToNextScreen() {
         // Navigate to HomeActivity instead of CategoriesActivity
         Intent intent = new Intent(MainActivity.this, HomeActivity.class);
@@ -72,7 +82,12 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-    // Phương thức test Firebase Authentication
+    /**
+     * Tests the Firebase Authentication setup by attempting to fetch sign-in methods for a generated test email.
+     *
+     * Logs the Firebase API key, confirms FirebaseAuth initialization, and verifies connectivity to Firebase Auth services.
+     * This method does not create any user accounts or modify authentication data.
+     */
     private void testFirebaseAuth() {
         try {
             Log.d("MainActivity", "Bắt đầu kiểm tra Firebase Authentication...");
@@ -107,7 +122,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Thêm phương thức kiểm tra file google-services.json
+    /**
+     * Checks for the presence and validity of the google-services.json configuration file in expected locations.
+     *
+     * Logs the existence or absence of google-services.json in the app's assets and file system directories, and warns if a placeholder Firebase API key is detected.
+     */
     private void checkGoogleServicesJson() {
         try {
             InputStream is = getAssets().open("google-services.json");

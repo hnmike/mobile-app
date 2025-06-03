@@ -24,8 +24,14 @@ public class FirebaseDatabaseExample {
     
     private static final String TAG = "FirebaseDBExample";
     
-    /**
-     * Example method to write data to Firebase Database
+    /****
+     * Writes user information to the Firebase Realtime Database under the specified user ID.
+     *
+     * @param userId the unique identifier for the user
+     * @param name the user's name
+     * @param email the user's email address
+     *
+     * The method stores the user's name, email, and the current timestamp as 'lastLoginAt'.
      */
     public void writeUserData(String userId, String name, String email) {
         // Get a reference to the users node and the specific user
@@ -40,6 +46,11 @@ public class FirebaseDatabaseExample {
         // Write to the database
         userRef.setValue(user)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    /**
+                     * Handles the completion of a user data write operation to Firebase Realtime Database, logging the result.
+                     *
+                     * @param task the task representing the completion status of the write operation
+                     */
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
@@ -51,8 +62,13 @@ public class FirebaseDatabaseExample {
                 });
     }
     
-    /**
-     * Example method to save a bookmark
+    /****
+     * Saves a bookmark for a user in the Firebase Realtime Database.
+     *
+     * @param userId the ID of the user for whom the bookmark is being saved
+     * @param articleId the unique identifier for the article to bookmark
+     * @param title the title of the bookmarked article
+     * @param url the URL of the bookmarked article
      */
     public void saveBookmark(String userId, String articleId, String title, String url) {
         // Get a reference to the user's bookmarks
@@ -67,6 +83,11 @@ public class FirebaseDatabaseExample {
         // Save the bookmark
         bookmarkRef.setValue(bookmark)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    /**
+                     * Callback invoked upon completion of the bookmark save operation.
+                     *
+                     * Logs a success message if the bookmark is saved successfully; otherwise logs the error encountered.
+                     */
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
@@ -79,7 +100,9 @@ public class FirebaseDatabaseExample {
     }
     
     /**
-     * Example method to read user data from Firebase Database
+     * Reads user data from the Firebase Realtime Database and logs the user's name and email if available.
+     *
+     * @param userId the unique identifier of the user whose data is to be read
      */
     public void readUserData(String userId) {
         // Get a reference to the specific user
@@ -87,6 +110,13 @@ public class FirebaseDatabaseExample {
         
         // Read from the database
         userRef.addValueEventListener(new ValueEventListener() {
+            /**
+             * Handles changes to the user's data in the database by retrieving and logging the user's name and email if available.
+             *
+             * Called when the user data at the specified database location is initially loaded or updated.
+             *
+             * @param dataSnapshot the snapshot of the current data at the user node
+             */
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // This method is called once with the initial value and again
@@ -101,6 +131,11 @@ public class FirebaseDatabaseExample {
                 }
             }
 
+            /**
+             * Called when a database read operation is canceled or fails.
+             *
+             * @param error the error that occurred during the database read
+             */
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 // Failed to read value
@@ -110,7 +145,10 @@ public class FirebaseDatabaseExample {
     }
     
     /**
-     * Example method to update user data
+     * Updates the user's name and sets the updated timestamp in the Firebase Realtime Database.
+     *
+     * @param userId   the unique identifier of the user whose data will be updated
+     * @param newName  the new name to set for the user
      */
     public void updateUserData(String userId, String newName) {
         // Get a reference to the specific user
@@ -124,6 +162,11 @@ public class FirebaseDatabaseExample {
         // Update the database
         userRef.updateChildren(updates)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    /**
+                     * Handles the completion of the user data update operation, logging the result.
+                     *
+                     * @param task the task representing the completion status of the update operation
+                     */
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
@@ -135,8 +178,11 @@ public class FirebaseDatabaseExample {
                 });
     }
     
-    /**
-     * Example method to delete a bookmark
+    /****
+     * Deletes a specific bookmark for a user from the Firebase Realtime Database.
+     *
+     * @param userId the ID of the user whose bookmark is to be deleted
+     * @param articleId the ID of the article bookmark to remove
      */
     public void deleteBookmark(String userId, String articleId) {
         // Get a reference to the specific bookmark
@@ -145,6 +191,11 @@ public class FirebaseDatabaseExample {
         // Remove the value
         bookmarkRef.removeValue()
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    /**
+                     * Handles the completion of a bookmark deletion operation, logging the result.
+                     *
+                     * Logs a success message if the bookmark was deleted successfully, or logs an error with details if the operation failed.
+                     */
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
@@ -157,7 +208,9 @@ public class FirebaseDatabaseExample {
     }
     
     /**
-     * Example method to read all bookmarks for a user
+     * Reads and logs all bookmarks for the specified user from the Firebase Realtime Database.
+     *
+     * @param userId the unique identifier of the user whose bookmarks are to be retrieved
      */
     public void readUserBookmarks(String userId) {
         // Get a reference to the user's bookmarks
@@ -165,6 +218,11 @@ public class FirebaseDatabaseExample {
         
         // Read from the database
         bookmarksRef.addValueEventListener(new ValueEventListener() {
+            /**
+             * Handles changes to the user's bookmarks data by iterating through each bookmark and logging its details.
+             *
+             * @param dataSnapshot the snapshot containing the user's bookmarks data
+             */
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Iterate through each bookmark
@@ -177,6 +235,11 @@ public class FirebaseDatabaseExample {
                 }
             }
 
+            /**
+             * Called when the bookmark data read operation is canceled or fails.
+             *
+             * @param error the database error encountered during the read operation
+             */
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 // Failed to read value
@@ -185,8 +248,10 @@ public class FirebaseDatabaseExample {
         });
     }
     
-    /**
-     * Utility method to get the current user ID
+    /****
+     * Retrieves the UID of the currently authenticated Firebase user.
+     *
+     * @return the user ID if a user is signed in; otherwise, null
      */
     private String getCurrentUserId() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();

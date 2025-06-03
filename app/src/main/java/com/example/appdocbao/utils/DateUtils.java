@@ -11,7 +11,14 @@ public class DateUtils {
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm", Locale.getDefault());
     private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
     
-    // Format date as relative time (e.g., "2 hours ago")
+    /**
+     * Returns a Vietnamese relative time string indicating how long ago the given date occurred.
+     *
+     * If the date is within the last minute, returns "Vừa xong". For times within the last hour, returns the number of minutes ago; within the last day, the number of hours ago; within the last week, the number of days ago. For dates older than a week, returns the formatted date as "dd/MM/yyyy". Returns an empty string if the input is null.
+     *
+     * @param date the date to compare to the current time
+     * @return a Vietnamese relative time string or a formatted date string if older than a week; empty string if date is null
+     */
     public static String getRelativeTimeSpan(Date date) {
         if (date == null) {
             return "";
@@ -38,7 +45,15 @@ public class DateUtils {
         }
     }
     
-    // Get time ago format (used in articles list)
+    /****
+     * Returns a human-readable English string representing how long ago the given date occurred.
+     *
+     * The result expresses the elapsed time in minutes, hours, days, weeks, months, or years, depending on the difference between the current time and the provided date.
+     * Returns an empty string if the input date is null.
+     *
+     * @param date the date to compare with the current time
+     * @return a relative time string such as "5 minutes ago", "2 hours ago", "3 days ago", "1 week ago", "4 months ago", or "2 years ago"
+     */
     public static String getTimeAgo(Date date) {
         if (date == null) {
             return "";
@@ -71,7 +86,12 @@ public class DateUtils {
         }
     }
     
-    // Format date as "dd/MM/yyyy"
+    /****
+     * Formats the given date as "dd/MM/yyyy".
+     *
+     * @param date the date to format; if null, returns an empty string
+     * @return the formatted date string, or an empty string if the date is null
+     */
     public static String formatDate(Date date) {
         if (date == null) {
             return "";
@@ -79,7 +99,12 @@ public class DateUtils {
         return DATE_FORMAT.format(date);
     }
     
-    // Format time as "HH:mm"
+    /****
+     * Formats the given date as a time string in "HH:mm" format.
+     *
+     * @param date the date to format; if null, returns an empty string
+     * @return the formatted time string, or an empty string if the date is null
+     */
     public static String formatTime(Date date) {
         if (date == null) {
             return "";
@@ -87,7 +112,12 @@ public class DateUtils {
         return TIME_FORMAT.format(date);
     }
     
-    // Format date and time as "dd/MM/yyyy HH:mm"
+    /****
+     * Formats the given date and time as "dd/MM/yyyy HH:mm".
+     *
+     * @param date the date to format; if null, returns an empty string
+     * @return the formatted date and time string, or an empty string if the date is null
+     */
     public static String formatDateTime(Date date) {
         if (date == null) {
             return "";

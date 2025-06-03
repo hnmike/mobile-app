@@ -30,12 +30,23 @@ public class CategoryRepository {
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
+    /**
+     * Initializes the CategoryRepository with Firestore, a single-threaded executor, and application context.
+     *
+     * @param context the Android context used to obtain the application context
+     */
     private CategoryRepository(Context context) {
         this.firestore = FirebaseFirestore.getInstance();
         this.executorService = Executors.newSingleThreadExecutor();
         this.context = context.getApplicationContext();
     }
 
+    /****
+     * Returns the singleton instance of CategoryRepository, initializing it if necessary.
+     *
+     * @param context the application context used for initialization
+     * @return the singleton CategoryRepository instance
+     */
     public static synchronized CategoryRepository getInstance(Context context) {
         if (instance == null) {
             instance = new CategoryRepository(context.getApplicationContext());
@@ -43,19 +54,42 @@ public class CategoryRepository {
         return instance;
     }
 
+    /**
+     * Returns a LiveData object containing the current list of news categories.
+     *
+     * Observers can use this LiveData to receive updates when the category list changes.
+     *
+     * @return LiveData holding a list of Category objects
+     */
     public LiveData<List<Category>> getCategories() {
         return categories;
     }
 
+    /**
+     * Returns a LiveData object representing the current loading state for category data.
+     *
+     * @return LiveData that is true if categories are being loaded, false otherwise
+     */
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
     }
 
+    /**
+     * Returns a LiveData object containing the current error message related to category operations.
+     *
+     * Observers can use this to display error notifications or messages in the UI when category loading or updates fail.
+     *
+     * @return LiveData holding the latest error message, or null if no error has occurred.
+     */
     public LiveData<String> getErrorMessage() {
         return errorMessage;
     }
 
-    // Load categories from Firestore or create them if they don't exist
+    /**
+     * Loads news categories from Firestore, falling back to local parsing or hardcoded data if necessary.
+     *
+     * If the device is offline, or Firestore retrieval fails, attempts to parse categories locally or use predefined categories as a last resort. Updates LiveData objects for categories, loading state, and error messages to reflect the current status.
+     */
     public void loadCategories() {
         try {
             if (!NetworkUtils.isNetworkAvailable(context)) {
@@ -104,7 +138,11 @@ public class CategoryRepository {
         }
     }
 
-    // Create local categories without using Firestore
+    /****
+     * Attempts to parse and load categories locally without using Firestore.
+     * <p>
+     * If local parsing fails, falls back to creating a predefined set of hardcoded categories.
+     */
     private void createLocalCategories() {
         try {
             List<Category> categoryList = VnExpressParser.parseCategories();
@@ -117,7 +155,11 @@ public class CategoryRepository {
         }
     }
     
-    // Create hardcoded categories as last resort
+    /**
+     * Creates and posts a predefined list of hardcoded news categories as a fallback.
+     *
+     * If category creation fails, posts an error message to observers.
+     */
     private void createHardcodedCategories() {
         try {
             List<Category> categoryList = new ArrayList<>();
@@ -135,7 +177,11 @@ public class CategoryRepository {
         }
     }
 
-    // Create categories in Firestore
+    /**
+     * Parses categories locally and saves them to Firestore asynchronously.
+     *
+     * If parsing or saving fails, falls back to creating categories using local data sources.
+     */
     private void createCategories() {
         try {
             executorService.execute(() -> {
@@ -161,7 +207,12 @@ public class CategoryRepository {
         }
     }
 
-    // Update category article count
+    /**
+     * Updates the article count for a specific category in Firestore.
+     *
+     * @param categoryId the ID of the category to update
+     * @param count the new article count to set for the category
+     */
     public void updateCategoryArticleCount(String categoryId, int count) {
         firestore.collection(Constants.COLLECTION_CATEGORIES)
                 .document(categoryId)

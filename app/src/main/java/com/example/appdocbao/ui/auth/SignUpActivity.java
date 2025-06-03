@@ -28,6 +28,11 @@ public class SignUpActivity extends AppCompatActivity {
     private AuthViewModel viewModel;
     private boolean isRegistrationComplete = false;
     
+    /**
+     * Initializes the sign-up activity, setting up the user interface, ViewModel, event listeners, and LiveData observers.
+     *
+     * @param savedInstanceState the previously saved state of the activity, if any
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +59,11 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Initializes and assigns all UI components required for the sign-up screen.
+     *
+     * @throws Exception if any view cannot be found or initialized
+     */
     private void initializeViews() {
         try {
             etUsername = findViewById(R.id.etUsername);
@@ -69,6 +79,12 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Initializes the authentication ViewModel for managing user registration state.
+     *
+     * Attempts to create or retrieve an instance of {@link AuthViewModel} using the {@link ViewModelProvider}.
+     * Logs an error if ViewModel initialization fails.
+     */
     private void setupViewModel() {
         try {
             viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
@@ -77,6 +93,11 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Configures click listeners for the sign-up button and sign-in text link.
+     *
+     * The sign-up button triggers the registration process, while the sign-in link returns the user to the sign-in screen.
+     */
     private void setupClickListeners() {
         try {
             btnSignUp.setOnClickListener(v -> signUp());
@@ -91,6 +112,11 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Sets up LiveData observers for authentication state, loading status, error messages, and validation errors.
+     *
+     * Observes changes from the ViewModel to update the UI, handle registration completion, display loading overlays, show error toasts, and trigger field validation as needed.
+     */
     private void setupObservers() {
         try {
             // Observe user authentication state
@@ -144,6 +170,12 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Initiates the user registration process by collecting input from the sign-up form and invoking the ViewModel's sign-up method.
+     *
+     * Retrieves and trims the username, email, password, and repeated password from the input fields, then passes them to the authentication ViewModel for processing.
+     * Displays an error toast if an exception occurs during the process.
+     */
     private void signUp() {
         try {
             Log.d(TAG, "Sign up button clicked");
@@ -162,6 +194,12 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Validates the user input fields for username, email, password, and password confirmation.
+     *
+     * Sets error messages on the corresponding input fields if any are empty, if the email format is invalid,
+     * if the password is too short, or if the repeated password does not match the original password.
+     */
     private void validateFields() {
         try {
             String username = etUsername.getText().toString().trim();
@@ -195,10 +233,21 @@ public class SignUpActivity extends AppCompatActivity {
         }
     }
     
+    /****
+     * Checks whether the provided character sequence is a valid email address.
+     *
+     * @param target the character sequence to validate as an email address
+     * @return true if the target is non-empty and matches the standard email address pattern; false otherwise
+     */
     private boolean isValidEmail(CharSequence target) {
         return !TextUtils.isEmpty(target) && android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
     }
     
+    /**
+     * Handles post-registration flow by signing out the user, displaying a success message, and returning to the sign-in screen.
+     *
+     * If the standard activity finish fails, attempts to explicitly start the sign-in activity as a fallback.
+     */
     private void returnToSignIn() {
         try {
             Log.d(TAG, "Registration successful, returning to SignInActivity");

@@ -43,6 +43,13 @@ public class ProfileActivity extends AppCompatActivity {
     private boolean isNavigating = false;
     private boolean viewsInitialized = false;
 
+    /**
+     * Initializes the profile screen, handling user authentication, UI setup, ViewModel integration, and navigation.
+     *
+     * If the user is not authenticated, navigates to the sign-in screen. Initializes UI components, sets up the ViewModel, loads user data, and configures observers and listeners. Handles errors during initialization and setup, providing user feedback and fallback navigation as needed.
+     *
+     * @param savedInstanceState the saved instance state bundle, if any
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,6 +118,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
     
+    /****
+     * Checks whether a user is currently authenticated with Firebase.
+     *
+     * @return true if a Firebase user is logged in; false otherwise
+     */
     private boolean isUserLoggedIn() {
         try {
             FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -121,6 +133,13 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Initializes and assigns UI components for the profile screen.
+     *
+     * Finds and assigns references to the user photo, username, email, sign-out control, progress bar, and bottom navigation views. Handles cases where the sign-out control may be a Button or a generic View, and sets up the appropriate click listener. Marks initialization as successful only if the main views are found.
+     *
+     * @return true if the main profile views are successfully initialized; false otherwise
+     */
     private boolean initializeViews() {
         try {
             imgUserPhoto = findViewById(R.id.profileImage);
@@ -160,6 +179,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Sets up click listeners for the sign-out controls if views are initialized.
+     *
+     * Assigns the sign-out action to the sign-out button or, if unavailable, to an alternative view.
+     */
     private void setupListeners() {
         try {
             if (!viewsInitialized) return;
@@ -179,6 +203,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
     
+    /****
+     * Signs the user out of Firebase and navigates to the sign-in screen.
+     *
+     * Attempts to sign out the current user and, regardless of success or failure, redirects to the sign-in activity.
+     */
     private void signOut() {
         try {
             FirebaseAuth.getInstance().signOut();
@@ -190,6 +219,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Initializes the ProfileViewModel for managing user profile data and shows the loading indicator.
+     *
+     * If initialization fails, logs the error.
+     */
     private void setupViewModel() {
         try {
             // Khởi tạo ViewModel sau
@@ -204,6 +238,12 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Loads and displays the current user's profile information from Firebase Authentication.
+     *
+     * Updates the username, email, and profile photo UI components if the user is logged in.
+     * Falls back to default values or images if user data is missing. Hides the progress bar if user data cannot be loaded.
+     */
     private void loadUserData() {
         try {
             // Kiểm tra và hiển thị thông tin người dùng hiện tại từ Firebase Auth
@@ -265,6 +305,12 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
     
+    /**
+     * Sets up LiveData observers for user data, loading state, and error messages from the ViewModel.
+     *
+     * Updates the UI with user profile information, handles loading indicator visibility, and displays error messages as toasts.
+     * Navigates to the sign-in screen if the user becomes null.
+     */
     private void setupObservers() {
         try {
             if (viewModel == null) {
@@ -357,6 +403,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Configures the bottom navigation bar to handle navigation between main app sections.
+     *
+     * Sets the current selection to the profile screen and defines navigation actions for home, categories, and bookmarks. Finishes the current activity after navigation to another section. If the bottom navigation view is not initialized, the method exits without action.
+     */
     private void setupBottomNavigation() {
         try {
             if (bottomNavigationView == null) {
@@ -395,6 +446,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Safely navigates the user to the sign-in screen, using multiple fallback methods to ensure navigation succeeds.
+     *
+     * Prevents multiple navigation attempts and, if navigation to the sign-in screen fails, attempts to navigate to the home screen as a last resort.
+     */
     private void safeNavigateToSignIn() {
         try {
             // Prevent multiple navigation attempts

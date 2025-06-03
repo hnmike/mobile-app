@@ -34,6 +34,11 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
     private CategoriesViewModel viewModel;
     private BottomNavigationView bottomNavigationView;
 
+    /**
+     * Initializes the CategoriesActivity, setting up the UI, RecyclerView, ViewModel, bottom navigation, and triggers loading of news categories.
+     *
+     * @param savedInstanceState the previously saved instance state, if any
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +65,9 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         }
     }
     
+    /**
+     * Initializes and assigns UI components for the categories screen, including the RecyclerView, ProgressBar, and BottomNavigationView if present.
+     */
     private void initViews() {
         try {
             recyclerViewCategories = findViewById(R.id.recyclerViewCategories);
@@ -76,6 +84,11 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         }
     }
     
+    /**
+     * Configures the RecyclerView to display categories in a two-column grid layout with a CategoryAdapter.
+     *
+     * Initializes the RecyclerView's layout manager and sets a new CategoryAdapter with an empty category list and this activity as the click listener.
+     */
     private void setupRecyclerView() {
         try {
             GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
@@ -87,6 +100,11 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         }
     }
     
+    /**
+     * Initializes the CategoriesViewModel and sets up observers for category data, loading state, and error messages.
+     *
+     * Observers update the UI in response to changes in the categories list, loading progress, or error conditions.
+     */
     private void initViewModel() {
         try {
             viewModel = new ViewModelProvider(this).get(CategoriesViewModel.class);
@@ -100,6 +118,11 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         }
     }
 
+    /**
+     * Configures the bottom navigation bar to handle navigation between Home, Categories, Bookmarks, and Profile or SignIn screens.
+     *
+     * If the bottom navigation view is not present in the layout, the method exits without action. Navigation to the Profile screen checks the user's login status and directs to either the Profile or SignIn activity accordingly.
+     */
     private void setupBottomNavigation() {
         try {
             if (bottomNavigationView == null) {
@@ -150,8 +173,9 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
     }
 
     /**
-     * Kiểm tra trạng thái đăng nhập của người dùng
-     * @return true nếu đã đăng nhập, false nếu chưa
+     * Determines whether a user is currently logged in via Firebase Authentication.
+     *
+     * @return true if a Firebase user is logged in; false otherwise
      */
     private boolean isUserLoggedIn() {
         try {
@@ -162,6 +186,11 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         }
     }
 
+    /**
+     * Updates the displayed list of categories in the adapter.
+     *
+     * @param categories the new list of categories to display
+     */
     private void updateCategories(List<Category> categories) {
         try {
             if (categoryAdapter != null && categories != null) {
@@ -172,6 +201,11 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         }
     }
 
+    /**
+     * Shows or hides the progress bar based on the loading state.
+     *
+     * @param isLoading true to display the progress bar, false to hide it
+     */
     private void setLoadingState(boolean isLoading) {
         try {
             if (progressBar != null) {
@@ -182,6 +216,11 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         }
     }
 
+    /**
+     * Displays a toast message with the provided error message if it is not empty.
+     *
+     * @param errorMessage the error message to display
+     */
     private void showError(String errorMessage) {
         try {
             if (errorMessage != null && !errorMessage.isEmpty()) {
@@ -192,6 +231,11 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         }
     }
 
+    /**
+     * Handles the event when a category is selected by navigating to the news list for that category.
+     *
+     * @param category the selected category
+     */
     @Override
     public void onCategoryClick(Category category) {
         try {

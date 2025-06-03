@@ -12,7 +12,12 @@ import java.util.List;
 public interface VnExpressService {
     
     // Since VnExpress doesn't have an open API, we'll use a custom parser to scrape the website
-    // This is just a placeholder for the structure
+    /****
+     * Sends an HTTP GET request to the specified URL and retrieves the raw HTML content as a string.
+     *
+     * @param url the full URL to fetch HTML content from
+     * @return a Call object for the HTTP request, yielding the HTML response as a string
+     */
     
     @GET
     Call<String> getHtmlContent(@Url String url);

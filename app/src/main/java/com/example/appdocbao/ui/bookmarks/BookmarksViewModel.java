@@ -18,6 +18,11 @@ public class BookmarksViewModel extends AndroidViewModel {
     private final LiveData<Boolean> isLoading;
     private final LiveData<String> errorMessage;
 
+    /**
+     * Constructs a BookmarksViewModel and initializes LiveData for bookmarked articles, loading state, and error messages.
+     *
+     * @param application the application context used to obtain the NewsRepository instance
+     */
     public BookmarksViewModel(@NonNull Application application) {
         super(application);
         newsRepository = NewsRepository.getInstance(application);
@@ -26,18 +31,36 @@ public class BookmarksViewModel extends AndroidViewModel {
         errorMessage = newsRepository.getErrorMessage();
     }
 
+    /**
+     * Returns a LiveData stream containing the list of bookmarked articles.
+     *
+     * @return LiveData representing the current list of bookmarked articles
+     */
     public LiveData<List<Article>> getBookmarkedArticles() {
         return bookmarkedArticles;
     }
 
+    /**
+     * Returns a LiveData object representing the loading state for bookmarked articles.
+     *
+     * @return LiveData indicating whether bookmarked articles are currently being loaded
+     */
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
     }
 
+    /**
+     * Returns a LiveData object containing the current error message related to bookmarked articles.
+     *
+     * @return LiveData holding the error message string, or null if there is no error.
+     */
     public LiveData<String> getErrorMessage() {
         return errorMessage;
     }
 
+    /****
+     * Triggers loading of bookmarked articles from the repository.
+     */
     public void loadBookmarkedArticles() {
         newsRepository.loadBookmarkedArticles();
     }

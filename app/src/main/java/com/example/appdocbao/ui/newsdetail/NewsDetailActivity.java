@@ -29,6 +29,13 @@ public class NewsDetailActivity extends AppCompatActivity {
     private String articleId;
     private boolean isBookmarked = false;
 
+    /**
+     * Initializes the activity to display detailed news article information.
+     *
+     * Retrieves the article ID from the intent, sets up UI components, initializes the ViewModel, and observes LiveData for article details, loading state, error messages, and bookmark status. Handles missing article ID and initialization errors by notifying the user and closing the activity.
+     *
+     * @param savedInstanceState the previously saved state of the activity, if any
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,6 +91,15 @@ public class NewsDetailActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Updates the UI with the details of the provided article.
+     *
+     * Populates text fields with the article's title, category, source, published time, and content.
+     * Loads the article image into the image view, using a placeholder if the image URL is missing or loading fails.
+     * If the article is null, displays an error message to the user.
+     *
+     * @param article the Article object containing details to display
+     */
     private void updateArticleDetails(Article article) {
         try {
             if (article != null) {
@@ -139,6 +155,11 @@ public class NewsDetailActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Updates the bookmark icon to reflect the current bookmark state.
+     *
+     * @param isBookmarked true if the article is bookmarked, false otherwise
+     */
     private void updateBookmarkState(Boolean isBookmarked) {
         try {
             if (isBookmarked != null) {
@@ -151,6 +172,12 @@ public class NewsDetailActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Toggles the bookmark state of the current article.
+     *
+     * Adds or removes the article from bookmarks based on its current state.
+     * Displays an error message if the operation fails.
+     */
     private void toggleBookmark() {
         try {
             if (isBookmarked) {
@@ -164,6 +191,11 @@ public class NewsDetailActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Shares the current article's title and source URL using an Android share intent.
+     *
+     * Opens a chooser dialog allowing the user to share the article details via compatible apps.
+     */
     private void shareArticle() {
         try {
             Article article = viewModel.getArticle().getValue();
@@ -180,6 +212,11 @@ public class NewsDetailActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Shows or hides the progress bar based on the loading state.
+     *
+     * @param isLoading true to display the progress bar, false to hide it
+     */
     private void setLoadingState(boolean isLoading) {
         try {
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
@@ -188,6 +225,11 @@ public class NewsDetailActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Displays an error message to the user as a toast and logs the error.
+     *
+     * @param errorMessage the error message to display; ignored if null or empty
+     */
     private void showError(String errorMessage) {
         try {
             if (errorMessage != null && !errorMessage.isEmpty()) {

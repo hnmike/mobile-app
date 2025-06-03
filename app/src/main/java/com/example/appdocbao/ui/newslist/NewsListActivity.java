@@ -33,6 +33,16 @@ public class NewsListActivity extends AppCompatActivity implements NewsAdapter.O
     private String categoryId;
     private String categoryName;
 
+    /**
+     * Initializes the activity to display a list of news articles filtered by category.
+     *
+     * Retrieves category information from the intent, sets up the toolbar and UI components,
+     * configures the RecyclerView and its adapter, initializes the ViewModel, observes LiveData
+     * for articles, loading state, and errors, and handles swipe-to-refresh to reload articles.
+     * If category information is missing, shows an error and exits the activity.
+     *
+     * @param savedInstanceState the previously saved instance state, or null if none
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,6 +93,15 @@ public class NewsListActivity extends AppCompatActivity implements NewsAdapter.O
         viewModel.loadArticlesByCategory(categoryId);
     }
 
+    /**
+     * Updates the UI to display the provided list of articles.
+     *
+     * If the list is non-empty, shows the articles in the RecyclerView and hides the "no articles" message.
+     * If the list is empty or null, hides the RecyclerView and displays the "no articles" message.
+     * Always stops the swipe-to-refresh animation.
+     *
+     * @param articles the list of articles to display
+     */
     private void updateArticles(List<Article> articles) {
         swipeRefreshLayout.setRefreshing(false);
         
@@ -96,12 +115,22 @@ public class NewsListActivity extends AppCompatActivity implements NewsAdapter.O
         }
     }
 
+    /**
+     * Shows or hides the progress bar based on the loading state, unless a swipe refresh is in progress.
+     *
+     * @param isLoading true to show the progress bar, false to hide it
+     */
     private void setLoadingState(boolean isLoading) {
         if (!swipeRefreshLayout.isRefreshing()) {
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         }
     }
 
+    /**
+     * Displays an error message as a toast and stops any active swipe-to-refresh animation.
+     *
+     * @param errorMessage the error message to display; if null or empty, no toast is shown
+     */
     private void showError(String errorMessage) {
         swipeRefreshLayout.setRefreshing(false);
         
@@ -110,6 +139,11 @@ public class NewsListActivity extends AppCompatActivity implements NewsAdapter.O
         }
     }
 
+    /**
+     * Handles the event when a news article is clicked by launching the detail activity for the selected article.
+     *
+     * @param article the article that was clicked
+     */
     @Override
     public void onArticleClick(Article article) {
         Intent intent = new Intent(this, NewsDetailActivity.class);

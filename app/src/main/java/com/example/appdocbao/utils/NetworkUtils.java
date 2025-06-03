@@ -12,9 +12,12 @@ public class NetworkUtils {
     private static final String TAG = "NetworkUtils";
     
     /**
-     * Check if the device has an active internet connection
-     * @param context Application context
-     * @return true if connected, false otherwise
+     * Determines whether the device currently has an active internet connection.
+     *
+     * Checks for network connectivity using the appropriate APIs based on the Android version.
+     *
+     * @param context the application context used to access system services
+     * @return true if the device is connected to the internet, false otherwise
      */
     public static boolean isNetworkAvailable(Context context) {
         if (context == null) {

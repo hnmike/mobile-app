@@ -12,6 +12,13 @@ public class RetrofitClient {
     private static final String BASE_URL = "https://vnexpress.net/";
     private static Retrofit retrofit = null;
 
+    /**
+     * Returns a singleton Retrofit instance configured with custom timeouts, logging, and a Chrome-like User-Agent header for network requests to the base URL.
+     *
+     * The Retrofit client supports both scalar and JSON response parsing.
+     *
+     * @return the configured Retrofit instance
+     */
     public static Retrofit getClient() {
         if (retrofit == null) {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
@@ -41,6 +48,11 @@ public class RetrofitClient {
         return retrofit;
     }
 
+    /****
+     * Creates and returns an implementation of the VnExpressService interface using the configured Retrofit client.
+     *
+     * @return an instance of VnExpressService for making API requests to vnexpress.net
+     */
     public static VnExpressService getVnExpressService() {
         return getClient().create(VnExpressService.class);
     }

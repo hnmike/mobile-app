@@ -17,9 +17,12 @@ public class FirebaseManager {
     
     private static FirebaseDatabase mDatabase;
     
-    /**
-     * Get instance of Firebase Database with specific region (Asia Southeast 1)
-     * @return FirebaseDatabase instance
+    /****
+     * Returns a singleton instance of the Firebase Realtime Database configured for the Asia Southeast 1 region.
+     *
+     * The instance is initialized with disk persistence enabled on first access and reused for subsequent calls.
+     *
+     * @return the singleton FirebaseDatabase instance for the specified region
      */
     public static FirebaseDatabase getDatabase() {
         if (mDatabase == null) {
@@ -33,51 +36,57 @@ public class FirebaseManager {
     }
     
     /**
-     * Get a reference to a specific path in the database
-     * @param path The database path
-     * @return DatabaseReference for the specified path
+     * Returns a reference to the specified path in the Firebase Realtime Database.
+     *
+     * @param path the path within the database to reference
+     * @return a DatabaseReference pointing to the specified path
      */
     public static DatabaseReference getReference(String path) {
         return getDatabase().getReference(path);
     }
     
     /**
-     * Get the root reference of the database
-     * @return DatabaseReference for the root
+     * Returns a reference to the root node of the Firebase Realtime Database.
+     *
+     * @return the root DatabaseReference
      */
     public static DatabaseReference getRootReference() {
         return getDatabase().getReference();
     }
     
     /**
-     * Get a reference to the users node
-     * @return DatabaseReference for users
+     * Returns a reference to the "users" node in the Firebase Realtime Database.
+     *
+     * @return a DatabaseReference pointing to the "users" node
      */
     public static DatabaseReference getUsersReference() {
         return getReference("users");
     }
     
     /**
-     * Get a reference to a specific user by ID
-     * @param userId The user ID
-     * @return DatabaseReference for the specific user
+     * Returns a DatabaseReference pointing to the node of a specific user by user ID.
+     *
+     * @param userId the unique identifier of the user
+     * @return a DatabaseReference for the specified user's node under "users"
      */
     public static DatabaseReference getUserReference(String userId) {
         return getUsersReference().child(userId);
     }
     
     /**
-     * Get a reference to the bookmarks node
-     * @return DatabaseReference for bookmarks
+     * Returns a reference to the "bookmarks" node in the Firebase Realtime Database.
+     *
+     * @return a DatabaseReference pointing to the "bookmarks" node
      */
     public static DatabaseReference getBookmarksReference() {
         return getReference("bookmarks");
     }
     
     /**
-     * Get a reference to a specific user's bookmarks
-     * @param userId The user ID
-     * @return DatabaseReference for the user's bookmarks
+     * Returns a DatabaseReference to the bookmarks node for a specific user.
+     *
+     * @param userId the unique identifier of the user
+     * @return a DatabaseReference pointing to the user's bookmarks in the database
      */
     public static DatabaseReference getUserBookmarksReference(String userId) {
         return getBookmarksReference().child(userId);

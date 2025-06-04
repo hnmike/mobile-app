@@ -57,6 +57,7 @@ public class ProfileActivity extends AppCompatActivity {
             if (!isUserLoggedIn()) {
                 Log.d(TAG, "User is not logged in, navigating to login screen");
                 safeNavigateToSignIn();
+
                 return;
             }
             
@@ -402,6 +403,7 @@ public class ProfileActivity extends AppCompatActivity {
             
             // Phương pháp 1: Intent thông thường
             Intent intent = new Intent(ProfileActivity.this, SignInActivity.class);
+            Log.e("ngu", "Error with normal intent navigation: ");
             startActivity(intent);
             finish();
         } catch (Exception e) {

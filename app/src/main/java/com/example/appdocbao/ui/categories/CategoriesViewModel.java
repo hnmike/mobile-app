@@ -5,7 +5,6 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 
 import com.example.appdocbao.data.model.Category;
 import com.example.appdocbao.data.repository.CategoryRepository;
@@ -13,18 +12,18 @@ import com.example.appdocbao.data.repository.CategoryRepository;
 import java.util.List;
 
 public class CategoriesViewModel extends AndroidViewModel {
-
+    
     private final CategoryRepository categoryRepository;
     private final LiveData<List<Category>> categories;
     private final LiveData<Boolean> isLoading;
-    private final LiveData<String> errorMessage;
+    private long lastRefreshTime = 0;
+    private static final long REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
     public CategoriesViewModel(@NonNull Application application) {
         super(application);
         categoryRepository = CategoryRepository.getInstance(application);
         categories = categoryRepository.getCategories();
         isLoading = categoryRepository.getIsLoading();
-        errorMessage = categoryRepository.getErrorMessage();
     }
 
     public LiveData<List<Category>> getCategories() {
@@ -35,11 +34,20 @@ public class CategoriesViewModel extends AndroidViewModel {
         return isLoading;
     }
 
-    public LiveData<String> getErrorMessage() {
-        return errorMessage;
-    }
-
     public void loadCategories() {
         categoryRepository.loadCategories();
+        lastRefreshTime = System.currentTimeMillis();
+    }
+    
+    public void refreshCategories() {
+        categoryRepository.loadCategories();
+        lastRefreshTime = System.currentTimeMillis();
+    }
+    
+    public void refreshIfNeeded() {
+        long currentTime = System.currentTimeMillis();
+        if ((currentTime - lastRefreshTime) > REFRESH_THRESHOLD_MS) {
+            refreshCategories();
+        }
     }
 } 

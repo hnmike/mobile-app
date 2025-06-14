@@ -21,7 +21,7 @@ import com.example.appdocbao.R;
 import com.example.appdocbao.ui.auth.SignInActivity;
 import com.example.appdocbao.ui.bookmarks.BookmarksActivity;
 import com.example.appdocbao.ui.categories.CategoriesActivity;
-import com.example.appdocbao.ui.account.AccountInfoActivity;
+// import com.example.appdocbao.ui.account.AccountInfoActivity; // Not implemented yet
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -179,32 +179,28 @@ public class ProfileActivity extends AppCompatActivity {
             View cvAccountInfo = findViewById(R.id.cvAccountInfo);
             if (cvAccountInfo != null) {
                 cvAccountInfo.setOnClickListener(v -> {
-                    Intent intent = new Intent(ProfileActivity.this, AccountInfoActivity.class);
-                    startActivity(intent);
+                    Toast.makeText(this, "Tính năng thông tin tài khoản sẽ sớm có", Toast.LENGTH_SHORT).show();
                 });
             }
 
             View cvPolicy = findViewById(R.id.cvPolicy);
             if (cvPolicy != null) {
                 cvPolicy.setOnClickListener(v -> {
-                    Intent intent = new Intent(ProfileActivity.this, ProfilePolicyActivity.class);
-                    startActivity(intent);
+                    Toast.makeText(this, "Tính năng chính sách sẽ sớm có", Toast.LENGTH_SHORT).show();
                 });
             }
 
             View cvTerms = findViewById(R.id.cvTerms);
             if (cvTerms != null) {
                 cvTerms.setOnClickListener(v -> {
-                    Intent intent = new Intent(ProfileActivity.this, ProfileTermsActivity.class);
-                    startActivity(intent);
+                    Toast.makeText(this, "Tính năng điều khoản sẽ sớm có", Toast.LENGTH_SHORT).show();
                 });
             }
 
             View cvLanguage = findViewById(R.id.cvLanguage);
             if (cvLanguage != null) {
                 cvLanguage.setOnClickListener(v -> {
-                    Intent intent = new Intent(ProfileActivity.this, ProfileContactActivity.class);
-                    startActivity(intent);
+                    Toast.makeText(this, "Tính năng liên hệ sẽ sớm có", Toast.LENGTH_SHORT).show();
                 });
             }
         } catch (Exception e) {

@@ -16,6 +16,7 @@ import com.example.appdocbao.utils.Constants;
 import com.example.appdocbao.utils.NetworkUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
@@ -509,37 +510,55 @@ public class NewsRepository {
 
     // Load articles from Firestore by IDs
     private void loadArticlesByIds(List<String> articleIds) {
-        List<Article> articles = new ArrayList<>();
-        final int[] remaining = {articleIds.size()};
+        // Handle empty list case
+        if (articleIds.isEmpty()) {
+            isLoading.setValue(false);
+            bookmarkedArticles.setValue(new ArrayList<>());
+            return;
+        }
         
-        for (String articleId : articleIds) {
+        // Firestore whereIn has a limit of 10 items per query
+        // If we have more than 10 IDs, we need to batch them
+        List<List<String>> batches = new ArrayList<>();
+        for (int i = 0; i < articleIds.size(); i += 10) {
+            batches.add(articleIds.subList(i, Math.min(i + 10, articleIds.size())));
+        }
+        
+        List<Article> allArticles = new ArrayList<>();
+        final int[] remainingBatches = {batches.size()};
+        
+        for (List<String> batch : batches) {
             firestore.collection(Constants.COLLECTION_ARTICLES)
-                    .document(articleId)
+                    .whereIn(FieldPath.documentId(), batch)
                     .get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        remaining[0]--;
+                    .addOnSuccessListener(querySnapshot -> {
+                        remainingBatches[0]--;
                         
-                        if (documentSnapshot.exists()) {
-                            Article article = documentSnapshot.toObject(Article.class);
-                            if (article != null) {
-                                article.setBookmarked(true);
-                                articles.add(article);
+                        // Process documents in this batch
+                        for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                            if (document.exists()) {
+                                Article article = document.toObject(Article.class);
+                                if (article != null) {
+                                    article.setBookmarked(true);
+                                    allArticles.add(article);
+                                }
                             }
                         }
                         
-                        if (remaining[0] == 0) {
+                        // If all batches are processed, update LiveData
+                        if (remainingBatches[0] == 0) {
                             isLoading.setValue(false);
-                            bookmarkedArticles.setValue(articles);
+                            bookmarkedArticles.setValue(allArticles);
                         }
                     })
                     .addOnFailureListener(e -> {
-                        remaining[0]--;
+                        remainingBatches[0]--;
+                        Log.e(TAG, "loadArticlesByIds batch error: ", e);
                         
-                        Log.e(TAG, "loadArticlesByIds: ", e);
-                        
-                        if (remaining[0] == 0) {
+                        // If all batches are processed (even with errors), update LiveData
+                        if (remainingBatches[0] == 0) {
                             isLoading.setValue(false);
-                            bookmarkedArticles.setValue(articles);
+                            bookmarkedArticles.setValue(allArticles);
                         }
                     });
         }

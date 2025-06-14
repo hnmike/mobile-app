@@ -22,4 +22,5 @@ public class Constants {
     // Log tags
     public static final String TAG_AUTH = "AuthRepository";
     public static final String TAG_NEWS = "NewsRepository";
+    public static final String TAG_CATEGORIES = "Categories";
 } 

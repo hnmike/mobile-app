@@ -2,29 +2,24 @@ package com.example.appdocbao;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.appdocbao.ui.auth.AuthViewModel;
 import com.example.appdocbao.ui.auth.SignInActivity;
+import com.example.appdocbao.ui.bookmarks.BookmarksActivity;
 import com.example.appdocbao.ui.categories.CategoriesActivity;
+import com.example.appdocbao.ui.home.HomeActivity;
+import com.example.appdocbao.ui.profile.ProfileActivity;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button btnGetStarted;
+    private BottomNavigationView bottomNavigationView;
     private AuthViewModel authViewModel;
 
     @Override
@@ -35,39 +30,68 @@ public class MainActivity extends AppCompatActivity {
         // Initialize authentication viewModel
         authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
-        btnGetStarted = findViewById(R.id.btnGetStarted);
-        
-        // Set up button click listener
-        btnGetStarted.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                navigateToNextScreen();
-            }
-        });
+        // Initialize views
+        bottomNavigationView = findViewById(R.id.bottomNavigation);
 
-        // Comment out automatic navigation after 2 seconds to let user see the splash screen
-        /*
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                navigateToNextScreen();
-            }
-        }, 2000);
-        */
+        // Set up bottom navigation
+        setupBottomNavigation();
+
+        // Check authentication status
+        checkAuthenticationStatus();
+
+        // Set default selection to Home
+        bottomNavigationView.setSelectedItemId(R.id.nav_home);
+        
+        // Navigate to Home by default
+        if (savedInstanceState == null) {
+            Intent intent = new Intent(this, HomeActivity.class);
+            startActivity(intent);
+        }
 
         // Test Firebase Authentication
         testFirebaseAuth();
-        
-        // Kiểm tra file google-services.json
-        checkGoogleServicesJson();
     }
 
-    private void navigateToNextScreen() {
-        // Luôn chuyển đến trang Categories không quan tâm đến đăng nhập
-            Intent intent = new Intent(MainActivity.this, CategoriesActivity.class);
-            startActivity(intent);
-        
-        // Finish this activity so the user can't go back to the splash screen
+    private void setupBottomNavigation() {
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            Intent intent = null;
+            
+            if (item.getItemId() == R.id.nav_home) {
+                intent = new Intent(this, HomeActivity.class);
+            } else if (item.getItemId() == R.id.nav_categories) {
+                intent = new Intent(this, CategoriesActivity.class);
+            } else if (item.getItemId() == R.id.nav_bookmarks) {
+                intent = new Intent(this, BookmarksActivity.class);
+            } else if (item.getItemId() == R.id.nav_profile) {
+                if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                    intent = new Intent(this, ProfileActivity.class);
+                } else {
+                    intent = new Intent(this, SignInActivity.class);
+                }
+            }
+            
+            if (intent != null) {
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void checkAuthenticationStatus() {
+        // Observe authentication state
+        authViewModel.getCurrentUser().observe(this, user -> {
+            if (user == null) {
+                // User is not authenticated, redirect to sign in
+                redirectToSignIn();
+            }
+        });
+    }
+
+    private void redirectToSignIn() {
+        Intent intent = new Intent(MainActivity.this, SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 
@@ -84,63 +108,15 @@ public class MainActivity extends AppCompatActivity {
             FirebaseAuth auth = FirebaseAuth.getInstance();
             Log.d("MainActivity", "FirebaseAuth đã được khởi tạo: " + (auth != null));
             
-            // Tạo email test
-            String testEmail = "test" + System.currentTimeMillis() + "@example.com";
-            String testPassword = "Test123456";
-            
-            // Thử đăng ký không thực sự tạo tài khoản
-            Log.d("MainActivity", "Thử kết nối Firebase Auth với email: " + testEmail);
-            
-            auth.fetchSignInMethodsForEmail(testEmail)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Log.d("MainActivity", "Kết nối Firebase Auth thành công!");
-                    } else {
-                        Log.e("MainActivity", "Lỗi kết nối Firebase Auth: " + 
-                            (task.getException() != null ? task.getException().getMessage() : "Không rõ"));
-                    }
-                });
+            // Log current user status
+            if (auth.getCurrentUser() != null) {
+                Log.d("MainActivity", "Người dùng đã đăng nhập: " + auth.getCurrentUser().getEmail());
+            } else {
+                Log.d("MainActivity", "Chưa có người dùng đăng nhập");
+            }
                 
         } catch (Exception e) {
             Log.e("MainActivity", "Lỗi khi test Firebase Auth: " + e.getMessage(), e);
-        }
-    }
-
-    // Thêm phương thức kiểm tra file google-services.json
-    private void checkGoogleServicesJson() {
-        try {
-            InputStream is = getAssets().open("google-services.json");
-            Log.e("MainActivity", "Không thể mở file google-services.json từ assets");
-        } catch (IOException e) {
-            // Expected, file không nằm trong assets
-            Log.d("MainActivity", "File google-services.json không nằm trong assets (đây là bình thường)");
-        }
-        
-        try {
-            File googleServicesFile = new File(getApplicationContext().getFilesDir().getParentFile(), "app/google-services.json");
-            if (googleServicesFile.exists()) {
-                Log.d("MainActivity", "Tìm thấy file google-services.json trong " + googleServicesFile.getAbsolutePath());
-            } else {
-                Log.e("MainActivity", "Không tìm thấy file google-services.json trong " + googleServicesFile.getAbsolutePath());
-            }
-            
-            // Kiểm tra trong thư mục app
-            File appDir = new File(getApplicationContext().getFilesDir().getParentFile().getParentFile(), "app");
-            File appGoogleServicesFile = new File(appDir, "google-services.json");
-            if (appGoogleServicesFile.exists()) {
-                Log.d("MainActivity", "Tìm thấy file google-services.json trong " + appGoogleServicesFile.getAbsolutePath());
-            } else {
-                Log.e("MainActivity", "Không tìm thấy file google-services.json trong " + appGoogleServicesFile.getAbsolutePath());
-            }
-            
-            FirebaseOptions options = FirebaseApp.getInstance().getOptions();
-            String apiKey = options.getApiKey();
-            if ("AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q".equals(apiKey)) {
-                Log.e("MainActivity", "⚠️ CẢNH BÁO: Đang sử dụng API key mẫu! Cần thay thế google-services.json");
-            }
-            
-        } catch (Exception e) {
-            Log.e("MainActivity", "Lỗi khi kiểm tra google-services.json: " + e.getMessage(), e);
         }
     }
 }

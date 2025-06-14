@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="264dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="16dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Article Image -->
+        <ImageView
+            android:id="@+id/iv_article_image"
+            android:layout_width="match_parent"
+            android:layout_height="184dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Article Image"
+            tools:background="#D9D9D9" />
+
+        <!-- Content Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Category Tags -->
+            <TextView
+                android:id="@+id/tv_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DESIGN • INTERIOR"
+                android:textColor="#ACACAC"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- Article Title -->
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:maxLines="3"
+                android:ellipsize="end"
+                android:text="100 interior design reference and tips ideas for you"
+                android:textColor="#262626"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <!-- Date/Time -->
+            <TextView
+                android:id="@+id/tv_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="2 hours ago"
+                android:textColor="#8B8B8B"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView> 

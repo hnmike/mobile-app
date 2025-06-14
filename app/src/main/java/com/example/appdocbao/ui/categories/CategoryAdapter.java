@@ -7,15 +7,17 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.appdocbao.R;
 import com.example.appdocbao.data.model.Category;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
-
+    
     private List<Category> categories;
     private final OnCategoryClickListener listener;
 
@@ -24,13 +26,17 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     }
 
     public CategoryAdapter(List<Category> categories, OnCategoryClickListener listener) {
-        this.categories = categories;
+        this.categories = categories != null ? new ArrayList<>(categories) : new ArrayList<>();
         this.listener = listener;
     }
 
     public void updateCategories(List<Category> newCategories) {
-        this.categories = newCategories;
-        notifyDataSetChanged();
+        if (newCategories == null) return;
+        
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new CategoryDiffCallback(this.categories, newCategories));
+        this.categories.clear();
+        this.categories.addAll(newCategories);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     @NonNull
@@ -43,13 +49,42 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
 
     @Override
     public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
-        Category category = categories.get(position);
-        holder.bind(category, listener);
+        holder.bind(categories.get(position), listener);
     }
 
     @Override
     public int getItemCount() {
-        return categories != null ? categories.size() : 0;
+        return categories.size();
+    }
+
+    private static class CategoryDiffCallback extends DiffUtil.Callback {
+        private final List<Category> oldList;
+        private final List<Category> newList;
+
+        CategoryDiffCallback(List<Category> oldList, List<Category> newList) {
+            this.oldList = oldList;
+            this.newList = newList;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).getId().equals(newList.get(newItemPosition).getId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).equals(newList.get(newItemPosition));
+        }
     }
 
     static class CategoryViewHolder extends RecyclerView.ViewHolder {
@@ -65,14 +100,9 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         }
 
         void bind(final Category category, final OnCategoryClickListener listener) {
-            tvEmoji.setText(category.getEmoji());
+            tvEmoji.setText(category.getEmoji() != null ? category.getEmoji() : "📰");
             tvCategoryName.setText(category.getName());
-            
-            cardViewCategory.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onCategoryClick(category);
-                }
-            });
+            cardViewCategory.setOnClickListener(v -> listener.onCategoryClick(category));
         }
     }
 } 

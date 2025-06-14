@@ -81,12 +81,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-<<<<<<< HEAD
                 android:layout_marginStart="24dp"
-                android:text="Liên hệ"
-=======
-                android:text="Chinh sua nguoi dung"
->>>>>>> nhung
+                android:text="Chỉnh sửa người dùng"
                 android:textColor="#4D4D4D"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"

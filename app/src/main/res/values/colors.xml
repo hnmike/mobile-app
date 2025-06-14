@@ -26,4 +26,7 @@
     <!-- Sign In colors -->
     <color name="blue_primary">#1D61E7</color>
     <color name="black_lighter">#666666</color>
+    
+    <!-- Bottom Navigation colors -->
+    <color name="bottom_nav_color">@color/text_secondary</color>
 </resources>

@@ -36,52 +36,31 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_categories);
-        initializeComponents();
-    }
-
-    private void initializeComponents() {
-        initViews();
-        setupRecyclerView();
-        initViewModel();
-        setupBottomNavigation();
-        loadData();
-    }
-    
-    private void initViews() {
+        
+        // Khởi tạo views
         recyclerViewCategories = findViewById(R.id.recyclerViewCategories);
         progressBar = findViewById(R.id.progressBar);
+        bottomNavigationView = findViewById(R.id.bottomNavigation);
         
-        View navigation = findViewById(R.id.bottomNavigation);
-        if (navigation instanceof BottomNavigationView) {
-            bottomNavigationView = (BottomNavigationView) navigation;
-        }
-    }
-    
-    private void setupRecyclerView() {
+        // Thiết lập RecyclerView
         recyclerViewCategories.setLayoutManager(new GridLayoutManager(this, 2));
         categoryAdapter = new CategoryAdapter(new ArrayList<>(), this);
         recyclerViewCategories.setAdapter(categoryAdapter);
-    }
-    
-    private void initViewModel() {
+        
+        // Khởi tạo ViewModel và observe dữ liệu
         viewModel = new ViewModelProvider(this).get(CategoriesViewModel.class);
-        observeViewModelData();
-    }
-    
-    private void observeViewModelData() {
         viewModel.getCategories().observe(this, this::updateCategories);
-        viewModel.getIsLoading().observe(this, this::setLoadingState);
-    }
-    
-    private void loadData() {
-        viewModel.loadCategories();
-    }
-    
-    private void setupBottomNavigation() {
+        viewModel.getIsLoading().observe(this, isLoading -> 
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE));
+        
+        // Thiết lập bottom navigation
         if (bottomNavigationView != null) {
             bottomNavigationView.setSelectedItemId(R.id.nav_categories);
             bottomNavigationView.setOnItemSelectedListener(this::handleNavigationItemSelected);
         }
+        
+        // Tải dữ liệu
+        viewModel.loadCategories();
     }
     
     private boolean handleNavigationItemSelected(@NonNull MenuItem item) {
@@ -90,44 +69,25 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         if (itemId == R.id.nav_categories) {
             return true;
         } else if (itemId == R.id.nav_bookmarks) {
-            navigateTo(BookmarksActivity.class);
+            startActivity(new Intent(this, BookmarksActivity.class));
             return true;
         } else if (itemId == R.id.nav_profile) {
-            navigateToProfile();
+            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                startActivity(new Intent(this, ProfileActivity.class));
+            } else {
+                Intent intent = new Intent();
+                intent.setClassName(getPackageName(), "com.example.appdocbao.ui.auth.SignInActivity");
+                startActivity(intent);
+            }
             return true;
         }
         
         return false;
     }
     
-    private void navigateToProfile() {
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            navigateTo(ProfileActivity.class);
-        } else {
-            navigateToSignIn();
-        }
-    }
-    
-    private void navigateToSignIn() {
-        Intent intent = new Intent();
-        intent.setClassName(getPackageName(), "com.example.appdocbao.ui.auth.SignInActivity");
-        startActivity(intent);
-    }
-    
-    private void navigateTo(Class<?> destinationClass) {
-        Intent intent = new Intent(this, destinationClass);
-        startActivity(intent);
-    }
-    
     private void updateCategories(List<Category> categories) {
-        if (categoryAdapter != null && categories != null) {
+        if (categories != null) {
             categoryAdapter.updateCategories(categories);
-        }
-    }
-
-    private void setLoadingState(boolean isLoading) {
-        if (progressBar != null) {
-            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         }
     }
     
@@ -138,12 +98,4 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
         intent.putExtra(Constants.EXTRA_CATEGORY_NAME, category.getName());
         startActivity(intent);
     }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (viewModel != null) {
-            viewModel.refreshIfNeeded();
-        }
-    }
-} 
+}

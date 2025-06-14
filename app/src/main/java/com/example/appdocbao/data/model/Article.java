@@ -163,54 +163,7 @@ public class Article {
         isBookmarked = bookmarked;
     }
 
-    // Additional methods that are referenced in the code
-    public String getSummary() {
-        // Return first 150 characters of content as summary
-        if (content != null && content.length() > 150) {
-            return content.substring(0, 150) + "...";
-        }
-        return content;
-    }
 
-    public void setSummary(String summary) {
-        // For now, we'll use this as a simplified content setter
-        // In a real app, you might want a separate summary field
-        this.content = summary;
-    }
-
-    public String getUrl() {
-        return sourceUrl;
-    }
-
-    public void setUrl(String url) {
-        this.sourceUrl = url;
-    }
-
-    public String getCategoryText() {
-        return categoryName;
-    }
-
-    public void setCategoryText(String categoryText) {
-        this.categoryName = categoryText;
-    }
-
-    public Date getPublishedTime() {
-        return publishDate;
-    }
-
-    public void setPublishedTime(Date publishedTime) {
-        this.publishDate = publishedTime;
-    }
-
-    public int getViewCount() {
-        // Return a default value - you can add a viewCount field if needed
-        return 0;
-    }
-
-    public void setViewCount(int viewCount) {
-        // For now, this is a no-op - you can add a viewCount field if needed
-        // this.viewCount = viewCount;
-    }
 
     // Additional methods needed by other parts of the app
     public String getSourceUrl() {

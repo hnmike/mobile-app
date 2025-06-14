@@ -44,9 +44,6 @@
             android:name=".ui.home.HomeActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.home.HomeActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.categories.CategoriesActivity"
             android:exported="false" />
 

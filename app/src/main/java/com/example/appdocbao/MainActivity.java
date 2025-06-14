@@ -27,29 +27,36 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialize authentication viewModel
-        authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+        try {
+            // Initialize views first
+            bottomNavigationView = findViewById(R.id.bottomNavigation);
+            
+            if (bottomNavigationView == null) {
+                Log.e("MainActivity", "BottomNavigationView not found in layout");
+                return;
+            }
 
-        // Initialize views
-        bottomNavigationView = findViewById(R.id.bottomNavigation);
+            // Set up bottom navigation
+            setupBottomNavigation();
+            
+            // Set default selection to Home
+            bottomNavigationView.setSelectedItemId(R.id.nav_home);
 
-        // Set up bottom navigation
-        setupBottomNavigation();
+            // Test Firebase Authentication
+            testFirebaseAuth();
 
-        // Check authentication status
-        checkAuthenticationStatus();
+            // Initialize authentication viewModel later to avoid crashes
+            try {
+                authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+                // Check authentication status - but don't redirect immediately
+                checkAuthenticationStatus();
+            } catch (Exception e) {
+                Log.e("MainActivity", "Error initializing AuthViewModel: " + e.getMessage(), e);
+            }
 
-        // Set default selection to Home
-        bottomNavigationView.setSelectedItemId(R.id.nav_home);
-        
-        // Navigate to Home by default
-        if (savedInstanceState == null) {
-            Intent intent = new Intent(this, HomeActivity.class);
-            startActivity(intent);
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error in onCreate: " + e.getMessage(), e);
         }
-
-        // Test Firebase Authentication
-        testFirebaseAuth();
     }
 
     private void setupBottomNavigation() {
@@ -79,13 +86,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkAuthenticationStatus() {
-        // Observe authentication state
-        authViewModel.getCurrentUser().observe(this, user -> {
-            if (user == null) {
-                // User is not authenticated, redirect to sign in
-                redirectToSignIn();
-            }
-        });
+        try {
+            // Observe authentication state - but with delay to avoid immediate redirect
+            authViewModel.getCurrentUser().observe(this, user -> {
+                // Log authentication status
+                Log.d("MainActivity", "Authentication status checked, user: " + (user != null ? "logged in" : "not logged in"));
+                
+                // Don't redirect immediately on app start - let user use the app
+                // Only redirect to sign in when user explicitly tries to access profile
+            });
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error checking authentication status: " + e.getMessage(), e);
+        }
     }
 
     private void redirectToSignIn() {

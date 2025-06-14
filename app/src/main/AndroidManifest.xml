@@ -17,10 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppDocBao"
         tools:targetApi="31">
-        <activity
-            android:name=".ui.account"
-            android:exported="false"
-            android:theme="@style/Theme.AppDocBao" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -35,6 +32,9 @@
             android:exported="true" />
         <activity
             android:name=".ui.auth.SignUpActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.home.HomeActivity"
             android:exported="false" />
         <activity
             android:name=".ui.categories.CategoriesActivity"

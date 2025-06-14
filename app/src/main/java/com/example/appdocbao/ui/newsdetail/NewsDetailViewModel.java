@@ -166,7 +166,7 @@ public class NewsDetailViewModel extends AndroidViewModel {
                                     // Tìm bài viết có ID tương ứng
                                     com.example.appdocbao.data.News targetNews = null;
                                     for (com.example.appdocbao.data.News news : newsList) {
-                                        if (news.getId() == finalNumericId) {
+                                        if (news.getId().equals(String.valueOf(finalNumericId))) {
                                             targetNews = news;
                                             break;
                                         }

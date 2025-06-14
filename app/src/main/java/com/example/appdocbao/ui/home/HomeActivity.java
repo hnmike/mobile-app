@@ -176,15 +176,56 @@ public class HomeActivity extends AppCompatActivity {
         allCategories.add(featuredCategory);
         allCategories.addAll(categories);
         
-        // Nhóm tin tức theo danh mục
+        // Tạo dữ liệu fake để test
+        Map<Integer, List<News>> categoryNewsMap = createFakeNewsData();
+        
+        // Cập nhật UI với dữ liệu fake
+        homeCategoriesAdapter.updateData(allCategories, categoryNewsMap);
+        
+        // Ẩn loading indicator
+        swipeRefreshLayout.setRefreshing(false);
+        
+        Toast.makeText(this, "Đã tải " + allCategories.size() + " danh mục", Toast.LENGTH_SHORT).show();
+    }
+    
+    private Map<Integer, List<News>> createFakeNewsData() {
         Map<Integer, List<News>> categoryNewsMap = new HashMap<>();
         
-        // Số lượng danh mục đã xử lý
-        final int[] processedCategories = {0};
-        final int totalCategories = allCategories.size();
+        for (int i = 0; i <= 8; i++) {
+            List<News> newsList = new ArrayList<>();
+            
+            for (int j = 1; j <= 5; j++) {
+                News news = new News();
+                news.setId("news_" + i + "_" + j);
+                news.setTitle("Tin tức " + getCategoryNameById(i) + " số " + j);
+                news.setDescription("Mô tả ngắn cho bài viết " + j + " trong danh mục " + getCategoryNameById(i));
+                news.setImageUrl("https://via.placeholder.com/300x200.png?text=News+" + i + "-" + j);
+                news.setUrl("https://example.com/news/" + i + "/" + j);
+                news.setCategoryId(i);
+                news.setCategoryName(getCategoryNameById(i));
+                news.setPublishedDate(new Date());
+                newsList.add(news);
+            }
+            
+            categoryNewsMap.put(i, newsList);
+        }
         
-        // Tải tin tức từ API cho tất cả danh mục
-        loadCategoriesNewsFromApi(allCategories, categoryNewsMap, processedCategories, totalCategories);
+        return categoryNewsMap;
+    }
+    
+    private String getCategoryNameById(int categoryId) {
+        switch (categoryId) {
+            case 0: return "Bài viết nổi bật";
+            case 1: return "Thời sự";
+            case 2: return "Thế giới";
+            case 3: return "Kinh doanh";
+            case 4: return "Giải trí";
+            case 5: return "Thể thao";
+            case 6: return "Pháp luật";
+            case 7: return "Giáo dục";
+            case 8: return "Sức khỏe";
+            default: return "Tin tức";
+        }
     }
     
     private void loadCategoriesNewsFromApi(List<Category> allCategories, Map<Integer, List<News>> categoryNewsMap, 
@@ -508,15 +549,15 @@ public class HomeActivity extends AppCompatActivity {
                 try {
                     Glide.with(context)
                             .load(news.getImageUrl())
-                            .placeholder(R.drawable.placeholder_image)
-                            .error(R.drawable.placeholder_image)
+                            .placeholder(R.drawable.ic_category_default)
+                            .error(R.drawable.ic_category_default)
                             .into(holder.ivThumbnail);
                 } catch (Exception e) {
                     Log.e("CategoryNewsAdapter", "Error loading image", e);
-                    holder.ivThumbnail.setImageResource(R.drawable.placeholder_image);
+                    holder.ivThumbnail.setImageResource(R.drawable.ic_category_default);
                 }
             } else {
-                holder.ivThumbnail.setImageResource(R.drawable.placeholder_image);
+                holder.ivThumbnail.setImageResource(R.drawable.ic_category_default);
             }
             
             // Đảm bảo thông tin nguồn được hiển thị hoặc ẩn nếu không có

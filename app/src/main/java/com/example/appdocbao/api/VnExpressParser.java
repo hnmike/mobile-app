@@ -2,6 +2,7 @@ package com.example.appdocbao.api;
 
 import com.example.appdocbao.data.model.Article;
 import com.example.appdocbao.data.model.Category;
+import com.example.appdocbao.data.News;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import android.util.Log;
 
@@ -22,9 +24,7 @@ public class VnExpressParser {
 
     public static final String BASE_URL = "https://vnexpress.net";
     private static final Map<String, String> CATEGORY_MAP = initCategoryMap();
-
-    // Bộ nhớ cache để lưu trữ thông tin bài viết theo ID
-    private static final Map<String, Article> articleCache = new HashMap<>();
+    private static final Map<String, Article> articleCache = new ConcurrentHashMap<>();
 
     private static Map<String, String> initCategoryMap() {
         Map<String, String> map = new HashMap<>();
@@ -53,16 +53,7 @@ public class VnExpressParser {
             String categoryId = entry.getKey();
             String categoryName = entry.getValue();
             
-            // Create emoji mapping for categories
-            String emoji = "📰"; // Default
-            
-            if (categoryName.equals("Thể thao")) emoji = "🏈";
-            else if (categoryName.equals("Giải trí")) emoji = "🎬";
-            else if (categoryName.equals("Kinh doanh")) emoji = "💼";
-            else if (categoryName.equals("Du lịch")) emoji = "🌴";
-            else if (categoryName.equals("Công nghệ") || categoryName.equals("Số hóa")) emoji = "🎮";
-            else if (categoryName.equals("Đời sống")) emoji = "🌞";
-            
+            String emoji = "📰";       
             Category category = new Category(
                     categoryId,
                     categoryName,
@@ -297,95 +288,156 @@ public class VnExpressParser {
         
         return articles;
     }
-    
-    public List<com.example.appdocbao.data.News> parseNews(String html, int categoryId) {
-        List<com.example.appdocbao.data.News> newsList = new ArrayList<>();
-        
-        // Convert categoryId to category string ID
-        String categoryStringId = getCategoryIdFromInt(categoryId);
-        if (categoryStringId == null && categoryId != 0) {
-            Log.e("VnExpressParser", "Invalid category ID: " + categoryId);
-            return newsList;
-        }
-        
-        // For featured news (categoryId = 0), we use the homepage
-        List<Article> articles;
-        if (categoryId == 0) {
-            articles = parseArticlesByCategory(html, "tin-tuc-24h");
-        } else {
-            articles = parseArticlesByCategory(html, categoryStringId);
-        }
-        
-        // Convert Articles to News objects
-        int newsId = categoryId * 1000 + 1; // Sử dụng categoryId*1000 để tránh trùng ID
-        for (Article article : articles) {
-            boolean isFeatured = newsId % 1000 <= 3; // First 3 articles are featured
-            
-            // Tạo ID duy nhất dựa trên tiêu đề để đảm bảo cùng một bài viết luôn có cùng ID
-            String stableId = String.valueOf(newsId);
-            
-            // Lưu Article vào cache với ID là stableId
-            articleCache.put(stableId, article);
-            
-            com.example.appdocbao.data.News news = new com.example.appdocbao.data.News(
-                    newsId++,
-                    article.getTitle(),
-                    article.getContent(),
-                    article.getImageUrl(),
-                    formatDate(article.getPublishedTime()),
-                    categoryId,
-                    isFeatured
-            );
-            
-            newsList.add(news);
-            
-            // Limit to 10 news per category
-            if (newsList.size() >= 10) {
-                break;
+
+    // Method để tương thích với HomeActivity
+    public List<News> parseNews(String html, int categoryId) {
+        List<News> newsList = new ArrayList<>();
+
+        try {
+            if (html == null || html.isEmpty()) {
+                Log.e("VnExpressParser", "Empty HTML content for parseNews");
+                return newsList;
             }
+
+            Document doc = Jsoup.parse(html);
+            Log.d("VnExpressParser", "parseNews - Parsed HTML document with title: " + doc.title());
+
+            Elements articleElements = doc.select("article.item-news");
+            Log.d("VnExpressParser", "parseNews - Found " + articleElements.size() + " article elements");
+
+            if (articleElements.isEmpty()) {
+                // Try alternative CSS selectors
+                articleElements = doc.select("article.item-news-common");
+                Log.d("VnExpressParser", "parseNews - Second attempt found " + articleElements.size() + " article elements");
+
+                if (articleElements.isEmpty()) {
+                    // Try more general selector
+                    articleElements = doc.select("article");
+                    Log.d("VnExpressParser", "parseNews - Last attempt found " + articleElements.size() + " article elements");
+                }
+            }
+
+            for (Element articleElement : articleElements) {
+                try {
+                    News news = parseNewsElement(articleElement, categoryId);
+                    if (news != null) {
+                        newsList.add(news);
+                        Log.d("VnExpressParser", "parseNews - Added news: " + news.getTitle());
+                    }
+                } catch (Exception e) {
+                    Log.e("VnExpressParser", "Error parsing individual news: " + e.getMessage(), e);
+                }
+            }
+        } catch (Exception e) {
+            Log.e("VnExpressParser", "Error in parseNews: " + e.getMessage(), e);
         }
-        
+
+        Log.d("VnExpressParser", "parseNews - Returning " + newsList.size() + " news items");
         return newsList;
     }
-    
-    private String getCategoryIdFromInt(int categoryId) {
+
+    private News parseNewsElement(Element articleElement, int categoryId) {
+        try {
+            // Extract title and URL
+            Element titleElement = articleElement.selectFirst("h3.title-news > a");
+            if (titleElement == null) {
+                titleElement = articleElement.selectFirst("h2.title-news > a");
+            }
+            if (titleElement == null) {
+                titleElement = articleElement.selectFirst("h3 > a");
+            }
+            if (titleElement == null) return null;
+
+            String title = titleElement.text();
+            String sourceUrl = titleElement.attr("href");
+            if (!sourceUrl.startsWith("http")) {
+                sourceUrl = BASE_URL + sourceUrl;
+            }
+
+            // Extract image URL
+            Element imageElement = articleElement.selectFirst("div.thumb-art > a > img");
+            String imageUrl = "";
+            if (imageElement != null) {
+                imageUrl = imageElement.attr("data-src");
+                if (imageUrl.isEmpty()) {
+                    imageUrl = imageElement.attr("src");
+                }
+
+                // Fix image URL if needed
+                if (!imageUrl.isEmpty() && !imageUrl.startsWith("http")) {
+                    imageUrl = "https:" + imageUrl;
+                }
+
+                Log.d("VnExpressParser", "parseNewsElement - Image URL for news '" + title + "': " + imageUrl);
+            } else {
+                // Try alternative selectors for images
+                imageElement = articleElement.selectFirst("img.lazy");
+                if (imageElement == null) {
+                    imageElement = articleElement.selectFirst("img");
+                }
+                if (imageElement != null) {
+                    imageUrl = imageElement.attr("data-src");
+                    if (imageUrl.isEmpty()) {
+                        imageUrl = imageElement.attr("src");
+                    }
+
+                    if (!imageUrl.isEmpty() && !imageUrl.startsWith("http")) {
+                        imageUrl = "https:" + imageUrl;
+                    }
+
+                    Log.d("VnExpressParser", "parseNewsElement - Found image with alternative selector: " + imageUrl);
+                }
+            }
+
+            // Extract description/content snippet
+            Element descElement = articleElement.selectFirst("p.description");
+            String description = descElement != null ? descElement.text() : "";
+
+            // Create News object
+            String id = UUID.randomUUID().toString();
+            String categoryName = getCategoryNameById(categoryId);
+
+            News news = new News();
+            news.setId(id);
+            news.setTitle(title);
+            news.setDescription(description);
+            news.setImageUrl(imageUrl);
+            news.setUrl(sourceUrl);
+            news.setCategoryId(categoryId);
+            news.setCategoryName(categoryName);
+            news.setPublishedDate(new Date());
+
+            return news;
+        } catch (Exception e) {
+            Log.e("VnExpressParser", "Error parsing news element: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    private String getCategoryNameById(int categoryId) {
         switch (categoryId) {
-            case 1: return "thoi-su";
-            case 2: return "the-gioi";
-            case 3: return "kinh-doanh";
-            case 4: return "giai-tri";
-            case 5: return "the-thao";
-            case 6: return "phap-luat";
-            case 7: return "giao-duc";
-            case 8: return "suc-khoe";
-            case 9: return "doi-song";
-            case 10: return "du-lich";
-            case 11: return "khoa-hoc";
-            case 12: return "so-hoa";
-            case 13: return "xe";
-            case 14: return "y-kien";
-            case 15: return "tam-su";
-            default: return null;
+            case 0: return "Bài viết nổi bật";
+            case 1: return "Thời sự";
+            case 2: return "Thế giới";
+            case 3: return "Kinh doanh";
+            case 4: return "Giải trí";
+            case 5: return "Thể thao";
+            case 6: return "Pháp luật";
+            case 7: return "Giáo dục";
+            case 8: return "Sức khỏe";
+            default: return "Tin tức";
         }
     }
-    
-    private String formatDate(Date date) {
-        if (date == null) {
-            return "";
-        }
-        
-        // Format the date as "HH:mm - dd/MM/yyyy"
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy", java.util.Locale.getDefault());
-        return sdf.format(date);
+
+    public static Article getArticleFromCache(String articleId) {
+        return articleCache.get(articleId);
     }
-    
-    // Thêm phương thức để lấy Article từ cache theo ID
-    public static Article getArticleFromCache(String id) {
-        return articleCache.get(id);
+
+    public static void putArticleInCache(String articleId, Article article) {
+        articleCache.put(articleId, article);
     }
-    
-    // Thêm phương thức để lưu Article vào cache theo ID
-    public static void putArticleInCache(String id, Article article) {
-        articleCache.put(id, article);
+
+    public static void clearCache() {
+        articleCache.clear();
     }
-} 
+}

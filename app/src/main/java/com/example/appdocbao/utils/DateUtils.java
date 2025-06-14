@@ -44,7 +44,31 @@ public class DateUtils {
             return "";
         }
         
-        return getRelativeTimeSpan(date);
+        long currentTime = new Date().getTime();
+        long dateTime = date.getTime();
+        long timeDiff = currentTime - dateTime;
+        
+        // Convert milliseconds to minutes, hours, days
+        long diffMinutes = TimeUnit.MILLISECONDS.toMinutes(timeDiff);
+        long diffHours = TimeUnit.MILLISECONDS.toHours(timeDiff);
+        long diffDays = TimeUnit.MILLISECONDS.toDays(timeDiff);
+        
+        if (diffMinutes < 60) {
+            return diffMinutes + " minutes ago";
+        } else if (diffHours < 24) {
+            return diffHours + " hours ago";
+        } else if (diffDays < 7) {
+            return diffDays + " days ago";
+        } else if (diffDays < 30) {
+            long weeks = diffDays / 7;
+            return weeks + " weeks ago";
+        } else if (diffDays < 365) {
+            long months = diffDays / 30;
+            return months + " months ago";
+        } else {
+            long years = diffDays / 365;
+            return years + " years ago";
+        }
     }
     
     // Format date as "dd/MM/yyyy"

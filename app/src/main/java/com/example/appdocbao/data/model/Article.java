@@ -1,36 +1,61 @@
 package com.example.appdocbao.data.model;
 
-import com.example.appdocbao.utils.DateUtils;
-
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class Article {
     private String id;
     private String title;
+    private String summary;
     private String content;
     private String imageUrl;
-    private String sourceUrl;
-    private String source;
+    private String url;
     private String categoryId;
-    private String categoryName;
-    private Date publishDate;
+    private String categoryText;
+    private String authorName;
+    private String authorAvatarUrl;
+    private Date publishedTime;
+    private int viewCount;
     private boolean isBookmarked;
-
-    // Default constructor required for Firestore
+    private String sourceName;
+    
     public Article() {
+        // Required empty constructor for Firebase
     }
-
-    public Article(String id, String title, String content, String imageUrl, String sourceUrl, 
-                  String source, String categoryId, String categoryName, Date publishDate) {
+    
+    public Article(String id, String title, String summary, String content, String imageUrl, 
+                  String url, String categoryId, String categoryText, String authorName, 
+                  String authorAvatarUrl, Date publishedTime, int viewCount, boolean isBookmarked) {
         this.id = id;
         this.title = title;
+        this.summary = summary;
         this.content = content;
         this.imageUrl = imageUrl;
-        this.sourceUrl = sourceUrl;
-        this.source = source;
+        this.url = url;
         this.categoryId = categoryId;
-        this.categoryName = categoryName;
-        this.publishDate = publishDate;
+        this.categoryText = categoryText;
+        this.authorName = authorName;
+        this.authorAvatarUrl = authorAvatarUrl;
+        this.publishedTime = publishedTime;
+        this.viewCount = viewCount;
+        this.isBookmarked = isBookmarked;
+    }
+    
+    // Constructor used by VnExpressParser
+    public Article(String id, String title, String content, String imageUrl, String sourceUrl, 
+                  String sourceName, String categoryId, String categoryName, Date publishedTime) {
+        this.id = id;
+        this.title = title;
+        this.summary = content;
+        this.content = content;
+        this.imageUrl = imageUrl;
+        this.url = sourceUrl;
+        this.categoryId = categoryId;
+        this.categoryText = categoryName;
+        this.publishedTime = publishedTime;
+        this.sourceName = sourceName;
+        this.viewCount = 0;
         this.isBookmarked = false;
     }
 
@@ -50,6 +75,14 @@ public class Article {
         this.title = title;
     }
 
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
     public String getContent() {
         return content;
     }
@@ -66,24 +99,12 @@ public class Article {
         this.imageUrl = imageUrl;
     }
 
-    public String getSourceUrl() {
-        return sourceUrl;
+    public String getUrl() {
+        return url;
     }
 
-    public void setSourceUrl(String sourceUrl) {
-        this.sourceUrl = sourceUrl;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getSourceName() {
-        return source;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public String getCategoryId() {
@@ -94,28 +115,44 @@ public class Article {
         this.categoryId = categoryId;
     }
 
-    public String getCategoryName() {
-        return categoryName;
+    public String getCategoryText() {
+        return categoryText;
     }
 
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
+    public void setCategoryText(String categoryText) {
+        this.categoryText = categoryText;
     }
 
-    public Date getPublishDate() {
-        return publishDate;
+    public String getAuthorName() {
+        return authorName;
     }
 
-    public void setPublishDate(Date publishDate) {
-        this.publishDate = publishDate;
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
     }
 
-    public Date getPublishedAt() {
-        return publishDate;
+    public String getAuthorAvatarUrl() {
+        return authorAvatarUrl;
     }
 
-    public String getPublishedTimeFormatted() {
-        return DateUtils.getTimeAgo(publishDate);
+    public void setAuthorAvatarUrl(String authorAvatarUrl) {
+        this.authorAvatarUrl = authorAvatarUrl;
+    }
+
+    public Date getPublishedTime() {
+        return publishedTime;
+    }
+
+    public void setPublishedTime(Date publishedTime) {
+        this.publishedTime = publishedTime;
+    }
+
+    public int getViewCount() {
+        return viewCount;
+    }
+
+    public void setViewCount(int viewCount) {
+        this.viewCount = viewCount;
     }
 
     public boolean isBookmarked() {
@@ -125,7 +162,7 @@ public class Article {
     public void setBookmarked(boolean bookmarked) {
         isBookmarked = bookmarked;
     }
-    
+
     // Additional methods that are referenced in the code
     public String getSummary() {
         // Return first 150 characters of content as summary
@@ -134,44 +171,71 @@ public class Article {
         }
         return content;
     }
-    
+
     public void setSummary(String summary) {
         // For now, we'll use this as a simplified content setter
         // In a real app, you might want a separate summary field
         this.content = summary;
     }
-    
+
     public String getUrl() {
         return sourceUrl;
     }
-    
+
     public void setUrl(String url) {
         this.sourceUrl = url;
     }
-    
+
     public String getCategoryText() {
         return categoryName;
     }
-    
+
     public void setCategoryText(String categoryText) {
         this.categoryName = categoryText;
     }
-    
+
     public Date getPublishedTime() {
         return publishDate;
     }
-    
+
     public void setPublishedTime(Date publishedTime) {
         this.publishDate = publishedTime;
     }
-    
+
     public int getViewCount() {
         // Return a default value - you can add a viewCount field if needed
         return 0;
     }
-    
+
     public void setViewCount(int viewCount) {
         // For now, this is a no-op - you can add a viewCount field if needed
         // this.viewCount = viewCount;
+    }
+
+    // Additional methods needed by other parts of the app
+    public String getSourceUrl() {
+        return url;
+    }
+
+    public String getSourceName() {
+        return sourceName != null ? sourceName : "VnExpress";
+    }
+
+    public void setSourceName(String sourceName) {
+        this.sourceName = sourceName;
+    }
+
+    public String getCategoryName() {
+        return categoryText;
+    }
+
+    public Date getPublishedAt() {
+        return publishedTime;
+    }
+
+    public String getPublishedTimeFormatted() {
+        if (publishedTime == null) return "";
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        return sdf.format(publishedTime);
     }
 } 

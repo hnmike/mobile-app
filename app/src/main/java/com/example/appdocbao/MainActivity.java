@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Intent intent = null;
-            
+
             if (item.getItemId() == R.id.nav_home) {
                 intent = new Intent(this, HomeActivity.class);
             } else if (item.getItemId() == R.id.nav_categories) {
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                     intent = new Intent(this, SignInActivity.class);
                 }
             }
-            
+
             if (intent != null) {
                 startActivity(intent);
                 return true;
@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
             authViewModel.getCurrentUser().observe(this, user -> {
                 // Log authentication status
                 Log.d("MainActivity", "Authentication status checked, user: " + (user != null ? "logged in" : "not logged in"));
-                
+
                 // Don't redirect immediately on app start - let user use the app
                 // Only redirect to sign in when user explicitly tries to access profile
             });
@@ -103,6 +103,13 @@ public class MainActivity extends AppCompatActivity {
     private void redirectToSignIn() {
         Intent intent = new Intent(MainActivity.this, SignInActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void navigateToNextScreen() {
+        // Chuyển đến HomeActivity thay vì CategoriesActivity
+        Intent intent = new Intent(MainActivity.this, HomeActivity.class);
         startActivity(intent);
         finish();
     }

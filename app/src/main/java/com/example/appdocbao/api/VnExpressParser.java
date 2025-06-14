@@ -23,6 +23,9 @@ public class VnExpressParser {
     public static final String BASE_URL = "https://vnexpress.net";
     private static final Map<String, String> CATEGORY_MAP = initCategoryMap();
 
+    // Bộ nhớ cache để lưu trữ thông tin bài viết theo ID
+    private static final Map<String, Article> articleCache = new HashMap<>();
+
     private static Map<String, String> initCategoryMap() {
         Map<String, String> map = new HashMap<>();
         map.put("thoi-su", "Thời sự");
@@ -293,5 +296,96 @@ public class VnExpressParser {
         }
         
         return articles;
+    }
+    
+    public List<com.example.appdocbao.data.News> parseNews(String html, int categoryId) {
+        List<com.example.appdocbao.data.News> newsList = new ArrayList<>();
+        
+        // Convert categoryId to category string ID
+        String categoryStringId = getCategoryIdFromInt(categoryId);
+        if (categoryStringId == null && categoryId != 0) {
+            Log.e("VnExpressParser", "Invalid category ID: " + categoryId);
+            return newsList;
+        }
+        
+        // For featured news (categoryId = 0), we use the homepage
+        List<Article> articles;
+        if (categoryId == 0) {
+            articles = parseArticlesByCategory(html, "tin-tuc-24h");
+        } else {
+            articles = parseArticlesByCategory(html, categoryStringId);
+        }
+        
+        // Convert Articles to News objects
+        int newsId = categoryId * 1000 + 1; // Sử dụng categoryId*1000 để tránh trùng ID
+        for (Article article : articles) {
+            boolean isFeatured = newsId % 1000 <= 3; // First 3 articles are featured
+            
+            // Tạo ID duy nhất dựa trên tiêu đề để đảm bảo cùng một bài viết luôn có cùng ID
+            String stableId = String.valueOf(newsId);
+            
+            // Lưu Article vào cache với ID là stableId
+            articleCache.put(stableId, article);
+            
+            com.example.appdocbao.data.News news = new com.example.appdocbao.data.News(
+                    newsId++,
+                    article.getTitle(),
+                    article.getContent(),
+                    article.getImageUrl(),
+                    formatDate(article.getPublishedTime()),
+                    categoryId,
+                    isFeatured
+            );
+            
+            newsList.add(news);
+            
+            // Limit to 10 news per category
+            if (newsList.size() >= 10) {
+                break;
+            }
+        }
+        
+        return newsList;
+    }
+    
+    private String getCategoryIdFromInt(int categoryId) {
+        switch (categoryId) {
+            case 1: return "thoi-su";
+            case 2: return "the-gioi";
+            case 3: return "kinh-doanh";
+            case 4: return "giai-tri";
+            case 5: return "the-thao";
+            case 6: return "phap-luat";
+            case 7: return "giao-duc";
+            case 8: return "suc-khoe";
+            case 9: return "doi-song";
+            case 10: return "du-lich";
+            case 11: return "khoa-hoc";
+            case 12: return "so-hoa";
+            case 13: return "xe";
+            case 14: return "y-kien";
+            case 15: return "tam-su";
+            default: return null;
+        }
+    }
+    
+    private String formatDate(Date date) {
+        if (date == null) {
+            return "";
+        }
+        
+        // Format the date as "HH:mm - dd/MM/yyyy"
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy", java.util.Locale.getDefault());
+        return sdf.format(date);
+    }
+    
+    // Thêm phương thức để lấy Article từ cache theo ID
+    public static Article getArticleFromCache(String id) {
+        return articleCache.get(id);
+    }
+    
+    // Thêm phương thức để lưu Article vào cache theo ID
+    public static void putArticleInCache(String id, Article article) {
+        articleCache.put(id, article);
     }
 } 

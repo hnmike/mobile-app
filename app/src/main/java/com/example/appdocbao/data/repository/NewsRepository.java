@@ -12,6 +12,7 @@ import com.example.appdocbao.api.VnExpressService;
 import com.example.appdocbao.data.model.Article;
 import com.example.appdocbao.data.model.Category;
 import com.example.appdocbao.data.model.User;
+import com.example.appdocbao.data.local.BookmarkDbHelper;
 import com.example.appdocbao.utils.Constants;
 import com.example.appdocbao.utils.NetworkUtils;
 import com.google.firebase.auth.FirebaseAuth;
@@ -473,94 +474,30 @@ public class NewsRepository {
 
     // Load bookmarked articles for current user
     public void loadBookmarkedArticles() {
-        String userId = getCurrentUserId();
-        if (userId == null) {
-            errorMessage.setValue("Bạn cần đăng nhập để xem bài viết đã lưu");
-            return;
-        }
-        
         isLoading.setValue(true);
+        Log.d(TAG, "Loading bookmarked articles from SQLite");
         
-        firestore.collection(Constants.COLLECTION_USERS)
-                .document(userId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        User user = documentSnapshot.toObject(User.class);
-                        if (user != null && user.getBookmarkedArticles() != null && !user.getBookmarkedArticles().isEmpty()) {
-                            List<String> bookmarkedIds = user.getBookmarkedArticles();
-                            
-                            // Load articles from Firestore by IDs
-                            loadArticlesByIds(bookmarkedIds);
-                        } else {
-                            isLoading.setValue(false);
-                            bookmarkedArticles.setValue(new ArrayList<>());
-                        }
-                    } else {
-                        isLoading.setValue(false);
-                        bookmarkedArticles.setValue(new ArrayList<>());
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    isLoading.setValue(false);
-                    errorMessage.setValue(e.getMessage());
-                    Log.e(TAG, "loadBookmarkedArticles: ", e);
-                });
-    }
-
-    // Load articles from Firestore by IDs
-    private void loadArticlesByIds(List<String> articleIds) {
-        // Handle empty list case
-        if (articleIds.isEmpty()) {
+        try {
+            // Get all bookmarks from SQLite
+            BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+            List<Article> bookmarkedArticlesList = dbHelper.getAllBookmarks();
+            
+            if (bookmarkedArticlesList.isEmpty()) {
+                Log.d(TAG, "No bookmarked articles found in SQLite");
+            } else {
+                Log.d(TAG, "Found " + bookmarkedArticlesList.size() + " bookmarked articles in SQLite");
+                for (Article article : bookmarkedArticlesList) {
+                    Log.d(TAG, "Loaded bookmark: " + article.getId() + " - " + article.getTitle());
+                }
+            }
+            
+            // Update LiveData with the bookmarked articles
+            bookmarkedArticles.setValue(bookmarkedArticlesList);
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading bookmarked articles from SQLite: " + e.getMessage(), e);
+            errorMessage.setValue("Lỗi khi tải bài viết đã lưu: " + e.getMessage());
+        } finally {
             isLoading.setValue(false);
-            bookmarkedArticles.setValue(new ArrayList<>());
-            return;
-        }
-        
-        // Firestore whereIn has a limit of 10 items per query
-        // If we have more than 10 IDs, we need to batch them
-        List<List<String>> batches = new ArrayList<>();
-        for (int i = 0; i < articleIds.size(); i += 10) {
-            batches.add(articleIds.subList(i, Math.min(i + 10, articleIds.size())));
-        }
-        
-        List<Article> allArticles = new ArrayList<>();
-        final int[] remainingBatches = {batches.size()};
-        
-        for (List<String> batch : batches) {
-            firestore.collection(Constants.COLLECTION_ARTICLES)
-                    .whereIn(FieldPath.documentId(), batch)
-                    .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        remainingBatches[0]--;
-                        
-                        // Process documents in this batch
-                        for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                            if (document.exists()) {
-                                Article article = document.toObject(Article.class);
-                                if (article != null) {
-                                    article.setBookmarked(true);
-                                    allArticles.add(article);
-                                }
-                            }
-                        }
-                        
-                        // If all batches are processed, update LiveData
-                        if (remainingBatches[0] == 0) {
-                            isLoading.setValue(false);
-                            bookmarkedArticles.setValue(allArticles);
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        remainingBatches[0]--;
-                        Log.e(TAG, "loadArticlesByIds batch error: ", e);
-                        
-                        // If all batches are processed (even with errors), update LiveData
-                        if (remainingBatches[0] == 0) {
-                            isLoading.setValue(false);
-                            bookmarkedArticles.setValue(allArticles);
-                        }
-                    });
         }
     }
 
@@ -641,22 +578,17 @@ public class NewsRepository {
 
     // Check if a single article is bookmarked
     private void checkBookmarkStatusForArticle(Article article) {
-        String userId = getCurrentUserId();
-        if (userId == null) return;
+        if (article == null) return;
         
-        firestore.collection(Constants.COLLECTION_USERS)
-                .document(userId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        User user = documentSnapshot.toObject(User.class);
-                        if (user != null && user.getBookmarkedArticles() != null) {
-                            article.setBookmarked(user.hasBookmarked(article.getId()));
-                            selectedArticle.setValue(article);
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> Log.e(TAG, "checkBookmarkStatusForArticle: ", e));
+        try {
+            BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+            boolean isBookmarked = dbHelper.isBookmarked(article.getId());
+            
+            article.setBookmarked(isBookmarked);
+            selectedArticle.setValue(article);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking bookmark status: " + e.getMessage(), e);
+        }
     }
 
     // Get current user ID
@@ -668,91 +600,168 @@ public class NewsRepository {
         return null;
     }
 
-    // Add a bookmark
+    // Add a bookmark using SQLite instead of Firestore
     public void addBookmark(String articleId) {
-        String userId = getCurrentUserId();
-        if (userId == null) {
-            errorMessage.setValue("Bạn cần đăng nhập để lưu bài viết");
-            return;
-        }
-
         isLoading.setValue(true);
-
-        // Add article ID to user's bookmarked articles
-        firestore.collection(Constants.COLLECTION_USERS)
-                .document(userId)
-                .update("bookmarkedArticles", com.google.firebase.firestore.FieldValue.arrayUnion(articleId))
-                .addOnSuccessListener(aVoid -> {
-                    isLoading.setValue(false);
-                    // Update local bookmark state
-                    Article article = selectedArticle.getValue();
-                    if (article != null) {
-                        article.setBookmarked(true);
-                        selectedArticle.setValue(article);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    isLoading.setValue(false);
-                    errorMessage.setValue(e.getMessage());
-                    Log.e(TAG, "addBookmark: ", e);
-                });
+        Log.d(TAG, "Adding bookmark for article: " + articleId);
+        
+        Article currentArticle = selectedArticle.getValue();
+        if (currentArticle == null) {
+            // Try to get article from cache first
+            currentArticle = com.example.appdocbao.api.VnExpressParser.getArticleFromCache(articleId);
+            
+            if (currentArticle == null) {
+                // If still not found, try to load from Firestore
+                loadArticleDetail(articleId);
+                isLoading.setValue(false);
+                errorMessage.setValue("Không thể lưu bài viết lúc này, hãy thử lại");
+                return;
+            }
+        }
+        
+        // Make sure we have a copy before modifying it
+        Article articleToSave = new Article(
+            currentArticle.getId(),
+            currentArticle.getTitle(),
+            currentArticle.getContent(),
+            currentArticle.getImageUrl(),
+            currentArticle.getSourceUrl(),
+            currentArticle.getSourceName(),
+            currentArticle.getCategoryId(),
+            currentArticle.getCategoryName(),
+            currentArticle.getPublishedAt()
+        );
+        
+        articleToSave.setBookmarked(true);
+        
+        // Save to SQLite database
+        BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+        boolean result = dbHelper.saveBookmark(articleToSave);
+        
+        if (result) {
+            Log.d(TAG, "Successfully added bookmark to SQLite");
+            // Update UI state
+            if (currentArticle == selectedArticle.getValue()) {
+                currentArticle.setBookmarked(true);
+                selectedArticle.setValue(currentArticle);
+            }
+        } else {
+            Log.e(TAG, "Failed to add bookmark to SQLite");
+            errorMessage.setValue("Không thể lưu bài viết, hãy thử lại");
+        }
+        
+        isLoading.setValue(false);
     }
-
-    // Remove a bookmark
+    
+    // Remove a bookmark using SQLite
     public void removeBookmark(String articleId) {
-        String userId = getCurrentUserId();
-        if (userId == null) {
-            errorMessage.setValue("Bạn cần đăng nhập để thực hiện thao tác này");
-            return;
-        }
-
         isLoading.setValue(true);
-
-        // Remove article ID from user's bookmarked articles
-        firestore.collection(Constants.COLLECTION_USERS)
-                .document(userId)
-                .update("bookmarkedArticles", com.google.firebase.firestore.FieldValue.arrayRemove(articleId))
-                .addOnSuccessListener(aVoid -> {
-                    isLoading.setValue(false);
-                    // Update local bookmark state
-                    Article article = selectedArticle.getValue();
-                    if (article != null) {
-                        article.setBookmarked(false);
-                        selectedArticle.setValue(article);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    isLoading.setValue(false);
-                    errorMessage.setValue(e.getMessage());
-                    Log.e(TAG, "removeBookmark: ", e);
-                });
+        Log.d(TAG, "Removing bookmark for article: " + articleId);
+        
+        // Remove from SQLite database
+        BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+        boolean result = dbHelper.removeBookmark(articleId);
+        
+        if (result) {
+            Log.d(TAG, "Successfully removed bookmark from SQLite");
+            // Update UI state if this is the currently viewed article
+            Article currentArticle = selectedArticle.getValue();
+            if (currentArticle != null && currentArticle.getId().equals(articleId)) {
+                currentArticle.setBookmarked(false);
+                selectedArticle.setValue(currentArticle);
+            }
+        } else {
+            Log.e(TAG, "Failed to remove bookmark from SQLite");
+            errorMessage.setValue("Không thể xóa bài viết đã lưu, hãy thử lại");
+        }
+        
+        isLoading.setValue(false);
     }
-
-    // Get the bookmark status for the current article
+    
+    // Get bookmark status for the selected article
     public LiveData<Boolean> getIsArticleBookmarked() {
         MutableLiveData<Boolean> isBookmarked = new MutableLiveData<>(false);
-        
-        String userId = getCurrentUserId();
-        if (userId == null) {
-            return isBookmarked;
-        }
         
         Article article = selectedArticle.getValue();
         if (article == null) {
             return isBookmarked;
         }
         
-        firestore.collection(Constants.COLLECTION_USERS)
-                .document(userId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    User user = documentSnapshot.toObject(User.class);
-                    if (user != null && user.getBookmarkedArticles() != null) {
-                        isBookmarked.setValue(user.getBookmarkedArticles().contains(article.getId()));
-                    }
-                })
-                .addOnFailureListener(e -> Log.e(TAG, "getIsArticleBookmarked: ", e));
+        try {
+            BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+            boolean bookmarked = dbHelper.isBookmarked(article.getId());
+            isBookmarked.setValue(bookmarked);
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting bookmark status: " + e.getMessage(), e);
+        }
         
         return isBookmarked;
+    }
+
+    /**
+     * Toggle bookmark status of an article
+     * @param articleId The ID of the article to toggle
+     * @return The new bookmark state (true = bookmarked, false = not bookmarked)
+     */
+    public boolean toggleBookmarkSQLite(String articleId) {
+        Article article = selectedArticle.getValue();
+        if (article == null || !article.getId().equals(articleId)) {
+            // Try to get from cache
+            article = VnExpressParser.getArticleFromCache(articleId);
+            
+            if (article == null) {
+                // Try to get from SQLite
+                BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+                article = dbHelper.getBookmark(articleId);
+                
+                if (article == null) {
+                    Log.e(TAG, "Cannot toggle bookmark - article not found: " + articleId);
+                    errorMessage.setValue("Không thể thay đổi trạng thái lưu bài viết");
+                    return false;
+                }
+            }
+        }
+        
+        boolean isCurrentlyBookmarked = false;
+        BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+        
+        // Check current bookmark status
+        isCurrentlyBookmarked = dbHelper.isBookmarked(articleId);
+        
+        boolean result;
+        if (isCurrentlyBookmarked) {
+            // Remove bookmark
+            result = dbHelper.removeBookmark(articleId);
+            if (result) {
+                Log.d(TAG, "Successfully removed bookmark: " + articleId);
+                if (article != null) {
+                    article.setBookmarked(false);
+                }
+            } else {
+                Log.e(TAG, "Failed to remove bookmark: " + articleId);
+            }
+        } else {
+            // Add bookmark
+            if (article != null) {
+                article.setBookmarked(true);
+                result = dbHelper.saveBookmark(article);
+                if (result) {
+                    Log.d(TAG, "Successfully added bookmark: " + articleId);
+                } else {
+                    Log.e(TAG, "Failed to add bookmark: " + articleId);
+                    article.setBookmarked(false);
+                }
+            } else {
+                Log.e(TAG, "Cannot bookmark null article");
+                result = false;
+            }
+        }
+        
+        // Update the UI
+        if (article != null && article.getId().equals(articleId)) {
+            selectedArticle.setValue(article);
+        }
+        
+        return !isCurrentlyBookmarked && result;
     }
 } 

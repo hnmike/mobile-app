@@ -8,7 +8,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.window.OnBackInvokedDispatcher;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.lifecycle.ViewModelProvider;
@@ -143,7 +145,7 @@ public class SignUpActivity extends AppCompatActivity {
             Log.e(TAG, "Error setting up observers: " + e.getMessage(), e);
         }
     }
-    
+
     private void signUp() {
         try {
             Log.d(TAG, "Sign up button clicked");
@@ -156,6 +158,10 @@ public class SignUpActivity extends AppCompatActivity {
             
             // Sign up with email and password through ViewModel
             viewModel.signUp(username, email, password, repeatPassword);
+            viewModel.signOut();
+//            returnToSignIn();
+            Toast.makeText(SignUpActivity.this, "Đăng ký thành công! Vui lòng đăng nhập.", Toast.LENGTH_SHORT).show();
+            finish();
         } catch (Exception e) {
             Log.e(TAG, "Error during signup process: " + e.getMessage(), e);
             Toast.makeText(this, "Lỗi khi đăng ký: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -202,12 +208,11 @@ public class SignUpActivity extends AppCompatActivity {
     private void returnToSignIn() {
         try {
             Log.d(TAG, "Registration successful, returning to SignInActivity");
-            
             // Show success message
             Toast.makeText(SignUpActivity.this, "Đăng ký thành công! Vui lòng đăng nhập.", Toast.LENGTH_SHORT).show();
-            
+
             // Return to SignInActivity
-            viewModel.signOut(); // Sign out the newly created user to force login
+//            viewModel.signOut(); // Sign out the newly created user to force login
             finish(); // Return to SignInActivity
         } catch (Exception e) {
             Log.e(TAG, "Error returning to sign in: " + e.getMessage(), e);

@@ -75,7 +75,7 @@ public class SignInActivity extends AppCompatActivity {
             Toast.makeText(this, "Lỗi khởi tạo màn hình đăng nhập", Toast.LENGTH_SHORT).show();
         }
     }
-    
+
     private void initializeViews() {
         try {
             etEmail = findViewById(R.id.etEmail);
@@ -95,6 +95,7 @@ public class SignInActivity extends AppCompatActivity {
     private void setupViewModel() {
         try {
             viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+            viewModel.signOut();
         } catch (Exception e) {
             Log.e(TAG, "Error setting up ViewModel: " + e.getMessage(), e);
             throw e;
@@ -151,7 +152,14 @@ public class SignInActivity extends AppCompatActivity {
             Log.e(TAG, "Error setting up click listeners: " + e.getMessage(), e);
         }
     }
-    
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        setupObservers();
+    }
+
     private void setupObservers() {
         try {
             // Observe user authentication state

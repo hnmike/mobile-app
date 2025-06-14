@@ -112,7 +112,9 @@ public class AuthRepository {
                             }
                             
                             errorMessage.setValue(errorMsg);
+
                         }
+                        isLoading.setValue(false);
                     })
                     .addOnFailureListener(e -> {
                         isLoading.setValue(false);
@@ -149,8 +151,7 @@ public class AuthRepository {
                             fetchUserData(firebaseUser.getUid());
                         }
                     } else {
-                        errorMessage.setValue(task.getException() != null ? 
-                                task.getException().getMessage() : "Sign in failed");
+                        errorMessage.setValue("Đăng nhập thất bại");
                         Log.e(TAG, "signIn: ", task.getException());
                     }
                 });

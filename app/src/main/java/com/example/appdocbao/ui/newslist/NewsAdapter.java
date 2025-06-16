@@ -1,0 +1,112 @@
+package com.example.appdocbao.ui.newslist;
+
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.example.appdocbao.R;
+import com.example.appdocbao.data.model.Article;
+import com.example.appdocbao.utils.DateUtils;
+
+import java.util.List;
+
+public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder> {
+
+    private List<Article> articles;
+    private final OnArticleClickListener listener;
+
+    public interface OnArticleClickListener {
+        void onArticleClick(Article article);
+    }
+
+    public NewsAdapter(List<Article> articles, OnArticleClickListener listener) {
+        this.articles = articles;
+        this.listener = listener;
+    }
+
+    public void updateArticles(List<Article> newArticles) {
+        this.articles = newArticles;
+        notifyDataSetChanged();
+    }
+
+    @NonNull
+    @Override
+    public NewsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_news, parent, false);
+        return new NewsViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull NewsViewHolder holder, int position) {
+        Article article = articles.get(position);
+        holder.bind(article, listener);
+    }
+
+    @Override
+    public int getItemCount() {
+        return articles != null ? articles.size() : 0;
+    }
+
+    static class NewsViewHolder extends RecyclerView.ViewHolder {
+        private final ImageView imgThumbnail;
+        private final TextView tvTitle;
+        private final TextView tvSource;
+        private final TextView tvPublishedTime;
+        private final CardView cardViewNews;
+
+        NewsViewHolder(@NonNull View itemView) {
+            super(itemView);
+            imgThumbnail = itemView.findViewById(R.id.imgThumbnail);
+            tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvSource = itemView.findViewById(R.id.tvSource);
+            tvPublishedTime = itemView.findViewById(R.id.tvPublishedTime);
+            cardViewNews = itemView.findViewById(R.id.cardViewNews);
+        }
+
+        void bind(final Article article, final OnArticleClickListener listener) {
+            tvTitle.setText(article.getTitle());
+            tvSource.setText(article.getSourceName());
+            
+            // Format time as "X hours ago"
+            String timeAgo = DateUtils.getTimeAgo(article.getPublishedAt());
+            tvPublishedTime.setText(timeAgo);
+            
+            // Load image with Glide
+            String imageUrl = article.getImageUrl();
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                // Fix image URL if needed
+                if (!imageUrl.startsWith("http")) {
+                    imageUrl = "https:" + imageUrl;
+                }
+                
+                Log.d("NewsAdapter", "Loading image: " + imageUrl);
+                
+                Glide.with(imgThumbnail.getContext())
+                        .load(imageUrl)
+                        .placeholder(R.drawable.placeholder_image)
+                        .error(R.drawable.placeholder_image)
+                        .centerCrop()
+                        .into(imgThumbnail);
+            } else {
+                imgThumbnail.setImageResource(R.drawable.placeholder_image);
+                Log.d("NewsAdapter", "No image URL for article: " + article.getTitle());
+            }
+            
+            cardViewNews.setOnClickListener(v -> {
+                if (listener != null) {
+                    Log.d("NewsAdapter", "Article clicked: " + article.getId() + " - " + article.getTitle());
+                    listener.onArticleClick(article);
+                }
+            });
+        }
+    }
+} 

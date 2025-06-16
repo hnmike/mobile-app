@@ -320,4 +320,25 @@
             android:layout_marginStart="4dp" />
     </LinearLayout>
 
+    <!-- Progress overlay -->
+    <FrameLayout
+        android:id="@+id/progressOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#80000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ProgressBar
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="center"
+            android:indeterminateTint="#1D61E7" />
+    </FrameLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout> 

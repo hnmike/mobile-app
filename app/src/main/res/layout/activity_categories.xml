@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="24dp"
         android:text="Danh sách các mục"
         android:textColor="@color/text_primary"
         android:textSize="24sp"
@@ -31,234 +31,42 @@
         app:layout_constraintStart_toStartOf="@id/tvCategoriesTitle"
         app:layout_constraintTop_toBottomOf="@id/tvCategoriesTitle" />
 
-    <!-- Category Cards - Row 1 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvSports"
-        android:layout_width="160dp"
-        android:layout_height="72dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="168dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="10dp"
+    <!-- RecyclerView for Categories -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewCategories"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:clipToPadding="false"
+        android:padding="8dp"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/tvCategoriesSubtitle"
+        tools:listitem="@layout/item_category" />
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/card_border_background" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="🏈   Thể thao"
-                android:textColor="#666666"
-                android:textSize="16sp" />
-        </FrameLayout>
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvPolitics"
-        android:layout_width="160dp"
-        android:layout_height="72dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="168dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="10dp"
-        app:layout_constraintStart_toEndOf="@id/cvSports"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/card_border_background"
-                android:rotationX="2" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="⚖️   Chính trị"
-                android:textColor="#666666"
-                android:textSize="16sp" />
-        </FrameLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Category Cards - Row 2 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvLifestyle"
-        android:layout_width="160dp"
-        android:layout_height="72dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="10dp"
-        app:layout_constraintStart_toStartOf="@id/cvSports"
-        app:layout_constraintTop_toBottomOf="@id/cvSports">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/card_border_background" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="🌞   Đời sống"
-                android:textColor="#666666"
-                android:textSize="16sp" />
-        </FrameLayout>
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvTechnology"
-        android:layout_width="160dp"
-        android:layout_height="72dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="10dp"
-        app:layout_constraintStart_toStartOf="@id/cvPolitics"
-        app:layout_constraintTop_toBottomOf="@id/cvPolitics">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/card_border_background" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="🎮   Công nghệ"
-                android:textColor="#666666"
-                android:textSize="16sp" />
-        </FrameLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Category Cards - Row 3 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvFashion"
-        android:layout_width="160dp"
-        android:layout_height="72dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="10dp"
-        app:layout_constraintStart_toStartOf="@id/cvLifestyle"
-        app:layout_constraintTop_toBottomOf="@id/cvLifestyle">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/card_border_background" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="👗   Thời trang"
-                android:textColor="#666666"
-                android:textSize="16sp" />
-        </FrameLayout>
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvTravel"
-        android:layout_width="160dp"
-        android:layout_height="72dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="10dp"
-        app:layout_constraintStart_toStartOf="@id/cvTechnology"
-        app:layout_constraintTop_toBottomOf="@id/cvTechnology">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/card_border_background"
-                android:rotation="-0" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="🌴   Du lịch"
-                android:textColor="#666666"
-                android:textSize="16sp" />
-        </FrameLayout>
-    </androidx.cardview.widget.CardView>
+    <!-- ProgressBar for loading state -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvCategoriesSubtitle" />
 
     <!-- Bottom Navigation -->
-    <LinearLayout
+    <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="96dp"
-        android:background="@color/white"
-        android:gravity="center"
-        android:orientation="horizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <ImageView
-            android:id="@+id/ivHome"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:contentDescription="Home"
-            android:src="@drawable/ic_home"
-            app:tint="#AAAAAA" />
-
-        <ImageView
-            android:id="@+id/ivCategories"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:contentDescription="Categories"
-            android:src="@drawable/ic_grid"
-            app:tint="#141E28" />
-
-        <ImageView
-            android:id="@+id/ivBookmarks"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:contentDescription="Bookmarks"
-            android:src="@drawable/ic_bookmark"
-            app:tint="#AAAAAA" />
-
-        <ImageView
-            android:id="@+id/ivProfile"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_weight="1"
-            android:contentDescription="Profile"
-            android:src="@drawable/ic_user"
-            app:tint="#AAAAAA" />
-    </LinearLayout>
+        app:menu="@menu/bottom_navigation_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout> 

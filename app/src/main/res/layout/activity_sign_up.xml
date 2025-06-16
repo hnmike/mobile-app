@@ -16,7 +16,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="72dp"
         android:layout_marginEnd="20dp"
-        android:text="Đăng ký"
+        android:text="Sign Up"
         android:textColor="@color/black"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -254,7 +254,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Đăng ký"
+            android:text="Sign Up"
             android:textColor="@color/white"
             android:textSize="16sp"
             android:layout_gravity="center" />
@@ -282,7 +282,7 @@
             android:id="@+id/tvSignIn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=" Đăng nhập"
+            android:text=" Sign In"
             android:textColor="@color/black_primary"
             android:textSize="16sp"
             android:textStyle="bold"

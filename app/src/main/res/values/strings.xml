@@ -23,9 +23,6 @@
     <string name="dont_have_account">Chưa có tài khoản?</string>
     <string name="create_one">Tạo tài khoản</string>
     <string name="sign_out">Đăng xuất</string>
-
-    <!-- Navigation -->
-    <string name="home">Trang chủ</string>
     
     <!-- Categories -->
     <string name="categories">Danh mục</string>

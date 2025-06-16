@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">AppDocBao</string>
+    <string name="default_web_client_id">123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com</string>
+    
+    <!-- Common -->
+    <string name="loading">Đang tải…</string>
+    <string name="error_occurred">Đã xảy ra lỗi</string>
+    <string name="retry">Thử lại</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Hủy</string>
+    
+    <!-- Auth -->
+    <string name="email">Email</string>
+    <string name="password">Mật khẩu</string>
+    <string name="sign_in">Đăng nhập</string>
+    <string name="sign_up">Đăng ký</string>
+    <string name="sign_in_with_google">Đăng nhập với Google</string>
+    <string name="sign_in_with_facebook">Đăng nhập với Facebook</string>
+    <string name="forgot_password">Quên mật khẩu?</string>
+    <string name="username">Tên người dùng</string>
+    <string name="repeat_password">Nhập lại mật khẩu</string>
+    <string name="already_have_account">Đã có tài khoản?</string>
+    <string name="dont_have_account">Chưa có tài khoản?</string>
+    <string name="create_one">Tạo tài khoản</string>
+    <string name="sign_out">Đăng xuất</string>
+    
+    <!-- Categories -->
+    <string name="categories">Danh mục</string>
+    <string name="no_categories">Không có danh mục nào</string>
+    
+    <!-- News -->
+    <string name="news">Tin tức</string>
+    <string name="no_articles">Không có bài viết nào</string>
+    <string name="bookmark">Lưu bài viết</string>
+    <string name="share">Chia sẻ</string>
+    <string name="bookmarks">Bài đã lưu</string>
+    <string name="no_bookmarks">Bạn chưa lưu bài viết nào</string>
+    <string name="profile">Tài khoản</string>
+    <string name="source">Nguồn:</string>
+    <string name="category">Danh mục:</string>
+    
+    <!-- Profile -->
+    <string name="account_info">Thông tin tài khoản</string>
+    <string name="language">Ngôn ngữ</string>
+    <string name="terms">Điều khoản sử dụng</string>
+    <string name="privacy">Chính sách bảo mật</string>
+</resources>

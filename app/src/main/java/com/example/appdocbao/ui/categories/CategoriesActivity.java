@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.appdocbao.R;
 import com.example.appdocbao.data.model.Category;
 import com.example.appdocbao.ui.bookmarks.BookmarksActivity;
+import com.example.appdocbao.ui.home.HomeActivity;
 import com.example.appdocbao.ui.newslist.NewsListActivity;
 import com.example.appdocbao.ui.profile.ProfileActivity;
 import com.example.appdocbao.utils.Constants;
@@ -66,7 +67,10 @@ public class CategoriesActivity extends AppCompatActivity implements CategoryAda
     private boolean handleNavigationItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
         
-        if (itemId == R.id.nav_categories) {
+        if (itemId == R.id.nav_home) {
+            startActivity(new Intent(this, HomeActivity.class));
+            return true;
+        } else if (itemId == R.id.nav_categories) {
             return true;
         } else if (itemId == R.id.nav_bookmarks) {
             startActivity(new Intent(this, BookmarksActivity.class));

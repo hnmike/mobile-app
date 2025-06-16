@@ -68,11 +68,11 @@ public class VnExpressParser {
      */
     public static List<Category> parseCategories() {
         List<Category> categories = new ArrayList<>();
-
+        
         for (Map.Entry<String, String> entry : CATEGORY_MAP.entrySet()) {
             String categoryId = entry.getKey();
             String categoryName = entry.getValue();
-
+            
             // Tạo ánh xạ emoji cho các danh mục
             String emoji = "📰"; // Mặc định
             // (Các điều kiện if-else để gán emoji)
@@ -89,10 +89,10 @@ public class VnExpressParser {
                     "Tin tức " + categoryName.toLowerCase() + " mới nhất",
                     emoji
             );
-
+            
             categories.add(category);
         }
-
+        
         return categories;
     }
 
@@ -106,31 +106,31 @@ public class VnExpressParser {
      */
     public static List<Article> parseArticlesByCategory(String html, String categoryId) {
         List<Article> articles = new ArrayList<>();
-
+        
         try {
             if (html == null || html.isEmpty()) {
                 Log.e("VnExpressParser", "Empty HTML content");
                 return articles; // Trả về danh sách rỗng nếu HTML trống
             }
-
+            
             Document doc = Jsoup.parse(html); // Phân tích HTML thành đối tượng Document
             Log.d("VnExpressParser", "Parsed HTML document with title: " + doc.title());
-
+            
             // Thử selector chính để tìm các phần tử bài báo
             Elements articleElements = doc.select("article.item-news");
             Log.d("VnExpressParser", "Found " + articleElements.size() + " article elements with 'article.item-news'");
-
+            
             // Nếu không tìm thấy, thử các selector thay thế
             if (articleElements.isEmpty()) {
                 articleElements = doc.select("article.item-news-common");
                 Log.d("VnExpressParser", "Second attempt found " + articleElements.size() + " article elements with 'article.item-news-common'");
-
+                
                 if (articleElements.isEmpty()) {
                     articleElements = doc.select("article"); // Thử selector chung hơn
                     Log.d("VnExpressParser", "Last attempt found " + articleElements.size() + " article elements with 'article'");
                 }
             }
-
+            
             // Duyệt qua từng phần tử bài báo tìm được và phân tích thông tin
             for (Element articleElement : articleElements) {
                 try {
@@ -146,11 +146,11 @@ public class VnExpressParser {
         } catch (Exception e) {
             Log.e("VnExpressParser", "Error parsing articles by category: " + e.getMessage(), e);
         }
-
+        
         Log.d("VnExpressParser", "Returning " + articles.size() + " articles for category " + categoryId);
         return articles;
     }
-
+    
     /**
      * Phân tích một phần tử HTML (Element) đại diện cho một bài báo để trích xuất thông tin chi tiết.
      * @param articleElement Phần tử HTML chứa thông tin bài báo.
@@ -165,14 +165,14 @@ public class VnExpressParser {
                 Log.w("VnExpressParser", "Title element not found in article element.");
                 return null; // Không tìm thấy tiêu đề, không thể tạo bài báo
             }
-
+            
             String title = titleElement.text();
             String sourceUrl = titleElement.attr("href");
             // Đảm bảo URL nguồn là URL đầy đủ
             if (!sourceUrl.startsWith("http")) {
                 sourceUrl = BASE_URL + sourceUrl;
             }
-
+            
             // Trích xuất URL hình ảnh
             Element imageElement = articleElement.selectFirst("div.thumb-art > a > img");
             String imageUrl = "";
@@ -181,7 +181,7 @@ public class VnExpressParser {
                 if (imageUrl.isEmpty()) {
                     imageUrl = imageElement.attr("src"); // Nếu không có 'data-src', thử 'src'
                 }
-
+                
                 // Sửa lỗi URL hình ảnh nếu cần (thêm https:)
                 if (!imageUrl.isEmpty() && !imageUrl.startsWith("http")) {
                     imageUrl = "https:" + imageUrl;
@@ -203,7 +203,7 @@ public class VnExpressParser {
                     Log.w("VnExpressParser", "Image element not found for article: " + title);
                 }
             }
-
+            
             // Trích xuất mô tả ngắn/đoạn trích nội dung
             Element descElement = articleElement.selectFirst("p.description");
             String content = descElement != null ? descElement.text() : ""; // Lấy text nếu phần tử tồn tại, ngược lại là chuỗi rỗng
@@ -211,7 +211,7 @@ public class VnExpressParser {
             // Tạo đối tượng Article
             String id = UUID.randomUUID().toString(); // Tạo ID duy nhất cho bài báo
             String categoryName = CATEGORY_MAP.getOrDefault(categoryId, "Tin tức"); // Lấy tên danh mục, mặc định là "Tin tức"
-
+            
             return new Article(
                     id,
                     title,
@@ -238,7 +238,7 @@ public class VnExpressParser {
     public static Article parseArticleDetail(String html, String categoryId) {
         try {
             Document doc = Jsoup.parse(html);
-
+            
             // Trích xuất tiêu đề chi tiết
             Element titleElement = doc.selectFirst("h1.title-detail");
             if (titleElement == null) {
@@ -246,7 +246,7 @@ public class VnExpressParser {
                 return null;
             }
             String title = titleElement.text();
-
+            
             // Trích xuất hình ảnh chính của bài báo
             Element imageElement = doc.selectFirst("div.fig-picture > picture > img");
             String imageUrl = "";
@@ -275,7 +275,7 @@ public class VnExpressParser {
                     Log.w("VnExpressParser", "Detail image element not found for article: " + title);
                 }
             }
-
+            
             // Trích xuất nội dung đầy đủ của bài báo
             StringBuilder contentBuilder = new StringBuilder();
             Elements contentElements = doc.select("article.fck_detail > p.Normal"); // Selector cho các đoạn văn bản
@@ -289,11 +289,11 @@ public class VnExpressParser {
                 contentBuilder.append(p.text()).append("\n\n"); // Nối văn bản từ mỗi đoạn, thêm dòng mới
             }
             String content = contentBuilder.toString().trim(); // Nội dung đầy đủ
-
+            
             // Tạo đối tượng Article
             String id = UUID.randomUUID().toString();
             String categoryName = CATEGORY_MAP.getOrDefault(categoryId, "Tin tức");
-
+            
             return new Article(
                     id,
                     title,
@@ -310,7 +310,7 @@ public class VnExpressParser {
             return null;
         }
     }
-
+    
     /**
      * Lấy và phân tích các bài báo mới nhất từ trang chủ VnExpress.
      * Giới hạn số lượng bài báo lấy về (mặc định là 20).
@@ -318,11 +318,11 @@ public class VnExpressParser {
      */
     public static List<Article> fetchLatestArticles() {
         List<Article> articles = new ArrayList<>();
-
+        
         try {
             // Kết nối đến trang chủ VnExpress và lấy nội dung HTML
             Document doc = Jsoup.connect(BASE_URL).get();
-
+            
             Elements articleElements = doc.select("article.item-news"); // Selector cho các bài báo trên trang chủ
             for (Element articleElement : articleElements) {
                 // Xác định danh mục của bài báo dựa trên link của danh mục
@@ -337,12 +337,12 @@ public class VnExpressParser {
                         }
                     }
                 }
-
+                
                 Article article = parseArticleElement(articleElement, categoryId); // Phân tích từng bài báo
                 if (article != null) {
                     articles.add(article);
                 }
-
+                
                 // Giới hạn số lượng bài báo lấy về
                 if (articles.size() >= 20) {
                     break;
@@ -352,7 +352,7 @@ public class VnExpressParser {
             Log.e("VnExpressParser", "Error fetching latest articles: " + e.getMessage(), e);
             // e.printStackTrace(); // Có thể hữu ích khi debug, nhưng Log.e thường đủ cho sản phẩm
         }
-
+        
         return articles;
     }
 
@@ -371,8 +371,8 @@ public class VnExpressParser {
         // Nếu categoryId không hợp lệ (và không phải là tin nổi bật/trang chủ) thì trả về danh sách rỗng
         if (categoryStringId == null && categoryId != 0) { // categoryId 0 có thể là trang chủ/tin nổi bật
             Log.e("VnExpressParser", "Invalid category ID for parseNews: " + categoryId);
-            return newsList;
-        }
+                return newsList;
+            }
 
         List<Article> articles;
         // Nếu categoryId là 0 (ví dụ: tin nổi bật), phân tích từ một categoryId mặc định hoặc trang chủ

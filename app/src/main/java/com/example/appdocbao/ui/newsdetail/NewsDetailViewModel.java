@@ -13,6 +13,7 @@ import com.example.appdocbao.data.repository.NewsRepository;
 import com.example.appdocbao.api.VnExpressParser;
 import com.example.appdocbao.api.VnExpressService;
 import com.example.appdocbao.api.RetrofitClient;
+import com.example.appdocbao.data.local.BookmarkDbHelper;
 
 import java.util.Date;
 import java.util.UUID;
@@ -79,8 +80,8 @@ public class NewsDetailViewModel extends AndroidViewModel {
                 ((MutableLiveData<Article>)newsRepository.getSelectedArticle()).setValue(cachedArticle);
                 ((MutableLiveData<Boolean>)newsRepository.getIsLoading()).setValue(false);
                 
-                // Kiểm tra bookmark
-                // newsRepository.checkBookmarkStatus(cachedArticle);
+                // Kiểm tra bookmark status
+                checkBookmarkStatus(cachedArticle.getId());
                 
                 // Vẫn thực hiện tải nội dung đầy đủ từ URL gốc để cập nhật cache nếu có thể
                 if (cachedArticle.getSourceUrl() != null && !cachedArticle.getSourceUrl().isEmpty()) {
@@ -156,6 +157,9 @@ public class NewsDetailViewModel extends AndroidViewModel {
                                         ((MutableLiveData<Article>)newsRepository.getSelectedArticle()).postValue(refreshedCachedArticle);
                                         ((MutableLiveData<Boolean>)newsRepository.getIsLoading()).postValue(false);
                                         
+                                        // Kiểm tra bookmark status
+                                        checkBookmarkStatus(refreshedCachedArticle.getId());
+                                        
                                         // Tải nội dung đầy đủ nếu có URL
                                         if (refreshedCachedArticle.getSourceUrl() != null && !refreshedCachedArticle.getSourceUrl().isEmpty()) {
                                             loadFullArticleContent(refreshedCachedArticle);
@@ -188,6 +192,9 @@ public class NewsDetailViewModel extends AndroidViewModel {
                                         
                                         ((MutableLiveData<Article>)newsRepository.getSelectedArticle()).postValue(foundArticle);
                                         ((MutableLiveData<Boolean>)newsRepository.getIsLoading()).postValue(false);
+                                        
+                                        // Kiểm tra bookmark status
+                                        checkBookmarkStatus(foundArticle.getId());
                                         
                                         // Thêm vào cache cho lần sau
                                         com.example.appdocbao.api.VnExpressParser.putArticleInCache(articleId, foundArticle);
@@ -319,5 +326,45 @@ public class NewsDetailViewModel extends AndroidViewModel {
 
     public boolean toggleBookmark(String articleId) {
         return newsRepository.toggleBookmarkSQLite(articleId);
+    }
+
+    private void checkBookmarkStatus(String articleId) {
+        try {
+            // Sử dụng phương thức mới từ NewsRepository
+            newsRepository.updateBookmarkStatus(articleId);
+            Log.d(TAG, "Checking bookmark status for article: " + articleId);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking bookmark status: " + e.getMessage(), e);
+            // Mặc định là false nếu có lỗi
+            ((MutableLiveData<Boolean>)newsRepository.getIsArticleBookmarked()).postValue(false);
+        }
+    }
+
+    // Check and update article information when internet is restored
+    public void checkAndUpdateArticleInfo(String articleId) {
+        try {
+            // Check if this is a numeric ID (from HomeActivity)
+            int numericId = -1;
+            try {
+                numericId = Integer.parseInt(articleId);
+            } catch (NumberFormatException e) {
+                // Not a numeric ID, skip
+                return;
+            }
+            
+            if (numericId > 0) {
+                // Check if we have a minimal article (placeholder title)
+                Article currentArticle = newsRepository.getSelectedArticle().getValue();
+                if (currentArticle != null && 
+                    currentArticle.getId().equals(articleId) && 
+                    "Bài viết từ trang chủ".equals(currentArticle.getTitle())) {
+                    
+                    Log.d(TAG, "Found minimal article, updating with full info: " + articleId);
+                    newsRepository.updateArticleInfoWhenOnline(articleId);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking article info update: " + e.getMessage(), e);
+        }
     }
 } 

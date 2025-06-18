@@ -97,6 +97,16 @@ public class NewsDetailActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        
+        // Check if we need to update article information when internet is restored
+        if (articleId != null) {
+            viewModel.checkAndUpdateArticleInfo(articleId);
+        }
+    }
+
     private void updateArticleDetails(Article article) {
         try {
             if (article != null) {
@@ -191,8 +201,21 @@ public class NewsDetailActivity extends AppCompatActivity {
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
                 shareIntent.putExtra(Intent.EXTRA_SUBJECT, article.getTitle());
-                shareIntent.putExtra(Intent.EXTRA_TEXT, article.getTitle() + "\n\n" + article.getSourceUrl());
+                
+                // Build share text with fallback for missing source URL
+                String shareText = article.getTitle();
+                String sourceUrl = article.getSourceUrl();
+                if (sourceUrl != null && !sourceUrl.isEmpty()) {
+                    shareText += "\n\n" + sourceUrl;
+                } else {
+                    // Fallback: use a generic VnExpress URL
+                    shareText += "\n\nhttps://vnexpress.net";
+                }
+                
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
                 startActivity(Intent.createChooser(shareIntent, getString(R.string.share)));
+            } else {
+                Toast.makeText(this, "Không thể chia sẻ bài viết lúc này", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             Log.e("NewsDetailActivity", "Error sharing article: " + e.getMessage(), e);

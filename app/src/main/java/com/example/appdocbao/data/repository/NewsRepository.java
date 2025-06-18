@@ -22,6 +22,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +46,7 @@ public class NewsRepository {
     private final MutableLiveData<Article> selectedArticle = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> isArticleBookmarked = new MutableLiveData<>(false);
 
     private NewsRepository(Context context) {
         this.firestore = FirebaseFirestore.getInstance();
@@ -276,7 +278,37 @@ public class NewsRepository {
         Log.d(TAG, "Loading article detail for ID: " + articleId);
         
         try {
-            // First check if we have the article in Firestore
+            // First check if we have the article in cache
+            Article cachedArticle = com.example.appdocbao.api.VnExpressParser.getArticleFromCache(articleId);
+            if (cachedArticle != null) {
+                Log.d(TAG, "Found article in cache: " + cachedArticle.getTitle());
+                selectedArticle.setValue(cachedArticle);
+                updateBookmarkStatus(articleId);
+                isLoading.setValue(false);
+                return;
+            }
+            
+            // If no internet connection, check SQLite database first
+            if (!NetworkUtils.isNetworkAvailable(context)) {
+                BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+                Article bookmarkedArticle = dbHelper.getBookmark(articleId);
+                
+                if (bookmarkedArticle != null) {
+                    Log.d(TAG, "Found article in SQLite database (offline mode): " + bookmarkedArticle.getTitle());
+                    selectedArticle.setValue(bookmarkedArticle);
+                    updateBookmarkStatus(articleId);
+                    isLoading.setValue(false);
+                    return;
+                } else {
+                    // Not found anywhere offline
+                    isLoading.setValue(false);
+                    errorMessage.setValue("Không có kết nối internet và bài viết không có trong bộ nhớ offline");
+                    Log.w(TAG, "No internet connection and article not found in SQLite: " + articleId);
+                    return;
+                }
+            }
+            
+            // If not in cache, check Firestore
             firestore.collection(Constants.COLLECTION_ARTICLES)
                     .document(articleId)
                     .get()
@@ -288,7 +320,7 @@ public class NewsRepository {
                                 
                                 // Important: Set the selectedArticle value immediately so UI has something to show
                                 selectedArticle.setValue(article);
-                                checkBookmarkStatusForArticle(article);
+                                updateBookmarkStatus(articleId);
                                 
                                 // If we have network, fetch the full content from VnExpress
                                 if (NetworkUtils.isNetworkAvailable(context) && article.getSourceUrl() != null) {
@@ -301,9 +333,9 @@ public class NewsRepository {
                                     }
                                 }
                             } else {
-                                isLoading.setValue(false);
-                                errorMessage.setValue("Bài viết không tồn tại");
-                                Log.e(TAG, "Article not found in Firestore: " + articleId);
+                                // Article not found in Firestore, try to load from VnExpress
+                                Log.w(TAG, "Article not found in Firestore, trying to load from VnExpress: " + articleId);
+                                loadArticleFromVnExpress(articleId);
                             }
                         } catch (Exception e) {
                             isLoading.setValue(false);
@@ -312,14 +344,87 @@ public class NewsRepository {
                         }
                     })
                     .addOnFailureListener(e -> {
-                        isLoading.setValue(false);
-                        errorMessage.setValue("Lỗi khi tải bài viết: " + e.getMessage());
-                        Log.e(TAG, "loadArticleDetail Firestore error: ", e);
+                        // Firestore failed, try to load from VnExpress
+                        Log.w(TAG, "Firestore failed, trying to load from VnExpress: " + e.getMessage());
+                        loadArticleFromVnExpress(articleId);
                     });
         } catch (Exception e) {
             isLoading.setValue(false);
             errorMessage.setValue("Lỗi không xác định: " + e.getMessage());
             Log.e(TAG, "Unexpected error in loadArticleDetail: ", e);
+        }
+    }
+    
+    // Load article from VnExpress when not found in cache or Firestore
+    private void loadArticleFromVnExpress(String articleId) {
+        try {
+            // Try to parse numeric ID to determine category
+            int numericId = -1;
+            try {
+                numericId = Integer.parseInt(articleId);
+            } catch (NumberFormatException e) {
+                // Not a numeric ID
+            }
+            
+            if (numericId > 0) {
+                // This is likely a News ID from HomeActivity
+                Log.d(TAG, "Loading numeric ID from VnExpress: " + numericId);
+                
+                // First check if we have this article in SQLite database (offline mode)
+                BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+                Article bookmarkedArticle = dbHelper.getBookmark(articleId);
+                
+                if (bookmarkedArticle != null) {
+                    // Found in SQLite, use it
+                    Log.d(TAG, "Found article in SQLite database: " + bookmarkedArticle.getTitle());
+                    selectedArticle.setValue(bookmarkedArticle);
+                    updateBookmarkStatus(articleId);
+                    isLoading.setValue(false);
+                    return;
+                }
+                
+                // If not in SQLite and no internet, show error
+                if (!NetworkUtils.isNetworkAvailable(context)) {
+                    isLoading.setValue(false);
+                    errorMessage.setValue("Không có kết nối internet và bài viết không có trong bộ nhớ offline");
+                    Log.w(TAG, "No internet connection and article not found in SQLite: " + articleId);
+                    return;
+                }
+                
+                // Determine category from ID
+                int tempCategoryId = (numericId % 10) + 1;
+                if (tempCategoryId > 15) tempCategoryId = 1; // Fallback
+                final int finalCategoryId = tempCategoryId;
+                final int finalNumericId = numericId;
+                
+                // Load articles from that category and find the specific one
+                loadArticlesByCategory(String.valueOf(finalCategoryId));
+                
+                // Set a temporary article while loading
+                Article tempArticle = new Article(
+                    articleId,
+                    "Đang tải bài viết...",
+                    "Vui lòng đợi trong giây lát...",
+                    "",
+                    "",
+                    "VnExpress",
+                    String.valueOf(finalCategoryId),
+                    "Tin tức",
+                    new Date()
+                );
+                selectedArticle.setValue(tempArticle);
+                updateBookmarkStatus(articleId);
+                isLoading.setValue(false);
+            } else {
+                // Unknown ID format
+                isLoading.setValue(false);
+                errorMessage.setValue("Không thể tải bài viết với ID: " + articleId);
+                Log.e(TAG, "Unknown article ID format: " + articleId);
+            }
+        } catch (Exception e) {
+            isLoading.setValue(false);
+            errorMessage.setValue("Lỗi khi tải bài viết từ VnExpress: " + e.getMessage());
+            Log.e(TAG, "Error loading from VnExpress: " + e.getMessage(), e);
         }
     }
     
@@ -611,11 +716,47 @@ public class NewsRepository {
             currentArticle = com.example.appdocbao.api.VnExpressParser.getArticleFromCache(articleId);
             
             if (currentArticle == null) {
+                // Try to get from SQLite
+                BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+                currentArticle = dbHelper.getBookmark(articleId);
+                
+                if (currentArticle == null) {
+                    // Try to create a minimal article for bookmarking
+                    try {
+                        int numericId = Integer.parseInt(articleId);
+                        if (numericId > 0) {
+                            // Create a minimal article object for bookmarking
+                            int categoryId = (numericId % 10) + 1;
+                            if (categoryId > 15) categoryId = 1;
+                            
+                            currentArticle = new Article(
+                                articleId,
+                                "Bài viết từ trang chủ", // Placeholder title
+                                "Nội dung bài viết sẽ được cập nhật khi có kết nối internet",
+                                "",
+                                "",
+                                "VnExpress",
+                                String.valueOf(categoryId),
+                                "Tin tức",
+                                new Date()
+                            );
+                            
+                            Log.d(TAG, "Created minimal article for bookmarking: " + articleId);
+                        } else {
                 // If still not found, try to load from Firestore
                 loadArticleDetail(articleId);
                 isLoading.setValue(false);
                 errorMessage.setValue("Không thể lưu bài viết lúc này, hãy thử lại");
                 return;
+                        }
+                    } catch (NumberFormatException e) {
+                        // If still not found, try to load from Firestore
+                        loadArticleDetail(articleId);
+                        isLoading.setValue(false);
+                        errorMessage.setValue("Không thể lưu bài viết lúc này, hãy thử lại");
+                        return;
+                    }
+                }
             }
         }
         
@@ -680,22 +821,20 @@ public class NewsRepository {
     
     // Get bookmark status for the selected article
     public LiveData<Boolean> getIsArticleBookmarked() {
-        MutableLiveData<Boolean> isBookmarked = new MutableLiveData<>(false);
-        
-        Article article = selectedArticle.getValue();
-        if (article == null) {
-            return isBookmarked;
-        }
-        
+        return isArticleBookmarked;
+    }
+
+    // Update bookmark status for the current article
+    public void updateBookmarkStatus(String articleId) {
         try {
             BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
-            boolean bookmarked = dbHelper.isBookmarked(article.getId());
-            isBookmarked.setValue(bookmarked);
+            boolean bookmarked = dbHelper.isBookmarked(articleId);
+            isArticleBookmarked.setValue(bookmarked);
+            Log.d(TAG, "Updated bookmark status for article " + articleId + ": " + bookmarked);
         } catch (Exception e) {
-            Log.e(TAG, "Error getting bookmark status: " + e.getMessage(), e);
+            Log.e(TAG, "Error updating bookmark status: " + e.getMessage(), e);
+            isArticleBookmarked.setValue(false);
         }
-        
-        return isBookmarked;
     }
 
     /**
@@ -715,9 +854,51 @@ public class NewsRepository {
                 article = dbHelper.getBookmark(articleId);
                 
                 if (article == null) {
-                    Log.e(TAG, "Cannot toggle bookmark - article not found: " + articleId);
-                    errorMessage.setValue("Không thể thay đổi trạng thái lưu bài viết");
+                    // Article not found anywhere, but we can still check bookmark status
+                    Log.w(TAG, "Article not found in any source, checking bookmark status only: " + articleId);
+                    boolean isCurrentlyBookmarked = dbHelper.isBookmarked(articleId);
+                    
+                    if (isCurrentlyBookmarked) {
+                        // Remove bookmark
+                        boolean result = dbHelper.removeBookmark(articleId);
+                        updateBookmarkStatus(articleId);
+                        return !result; // Return false if removal failed
+                    } else {
+                        // Try to create a minimal article for bookmarking
+                        // This is useful for articles from HomeActivity that haven't been bookmarked yet
+                        try {
+                            int numericId = Integer.parseInt(articleId);
+                            if (numericId > 0) {
+                                // Create a minimal article object for bookmarking
+                                int categoryId = (numericId % 10) + 1;
+                                if (categoryId > 15) categoryId = 1;
+                                
+                                article = new Article(
+                                    articleId,
+                                    "Bài viết từ trang chủ", // Placeholder title
+                                    "Nội dung bài viết sẽ được cập nhật khi có kết nối internet",
+                                    "",
+                                    "",
+                                    "VnExpress",
+                                    String.valueOf(categoryId),
+                                    "Tin tức",
+                                    new Date()
+                                );
+                                
+                                Log.d(TAG, "Created minimal article for bookmarking: " + articleId);
+                            } else {
+                                // Cannot add bookmark without article data
+                                Log.e(TAG, "Cannot add bookmark - article not found: " + articleId);
+                                errorMessage.setValue("Không thể lưu bài viết - thông tin bài viết không đầy đủ");
                     return false;
+                            }
+                        } catch (NumberFormatException e) {
+                            // Cannot add bookmark without article data
+                            Log.e(TAG, "Cannot add bookmark - article not found: " + articleId);
+                            errorMessage.setValue("Không thể lưu bài viết - thông tin bài viết không đầy đủ");
+                            return false;
+                        }
+                    }
                 }
             }
         }
@@ -762,6 +943,153 @@ public class NewsRepository {
             selectedArticle.setValue(article);
         }
         
+        // Update bookmark status LiveData
+        updateBookmarkStatus(articleId);
+        
         return !isCurrentlyBookmarked && result;
+    }
+
+    // Update article information when internet is restored
+    public void updateArticleInfoWhenOnline(String articleId) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            Log.d(TAG, "No internet connection, skipping article update");
+            return;
+        }
+        
+        try {
+            // Check if this is a numeric ID (from HomeActivity)
+            int numericId = -1;
+            try {
+                numericId = Integer.parseInt(articleId);
+            } catch (NumberFormatException e) {
+                // Not a numeric ID, skip
+                return;
+            }
+            
+            if (numericId > 0) {
+                Log.d(TAG, "Updating article info for numeric ID: " + numericId);
+                
+                // Determine category from ID
+                int tempCategoryId = (numericId % 10) + 1;
+                if (tempCategoryId > 15) tempCategoryId = 1; // Fallback
+                final int finalCategoryId = tempCategoryId;
+                final int finalNumericId = numericId;
+                
+                // Load articles from that category to find the specific one
+                String url = VnExpressParser.BASE_URL;
+                if (finalCategoryId > 0 && finalCategoryId <= 15) {
+                    url += "/" + getCategoryPath(finalCategoryId);
+                }
+                final String finalUrl = url;
+                
+                vnExpressService.getHtmlContent(url).enqueue(new Callback<String>() {
+                    @Override
+                    public void onResponse(Call<String> call, Response<String> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            String html = response.body();
+                            
+                            executorService.execute(() -> {
+                                try {
+                                    VnExpressParser parser = new VnExpressParser();
+                                    List<com.example.appdocbao.data.News> newsList = parser.parseNews(html, finalCategoryId);
+                                    
+                                    // Find the specific article
+                                    com.example.appdocbao.data.News targetNews = null;
+                                    for (com.example.appdocbao.data.News news : newsList) {
+                                        if (news.getId().equals(String.valueOf(finalNumericId))) {
+                                            targetNews = news;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (targetNews != null) {
+                                        // Create full article object
+                                        Article fullArticle = new Article(
+                                            String.valueOf(targetNews.getId()),
+                                            targetNews.getTitle(),
+                                            targetNews.getDescription(),
+                                            targetNews.getImageUrl(),
+                                            finalUrl,
+                                            "VnExpress",
+                                            String.valueOf(finalCategoryId),
+                                            getCategoryName(finalCategoryId),
+                                            new Date()
+                                        );
+                                        
+                                        // Update in SQLite if it was bookmarked
+                                        BookmarkDbHelper dbHelper = BookmarkDbHelper.getInstance(context);
+                                        if (dbHelper.isBookmarked(articleId)) {
+                                            fullArticle.setBookmarked(true);
+                                            dbHelper.saveBookmark(fullArticle);
+                                            Log.d(TAG, "Updated bookmarked article info: " + fullArticle.getTitle());
+                                        }
+                                        
+                                        // Update cache
+                                        VnExpressParser.putArticleInCache(articleId, fullArticle);
+                                        
+                                        // Update UI if this is the currently viewed article
+                                        Article currentArticle = selectedArticle.getValue();
+                                        if (currentArticle != null && currentArticle.getId().equals(articleId)) {
+                                            selectedArticle.postValue(fullArticle);
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Error updating article info: " + e.getMessage(), e);
+                                }
+                            });
+                        }
+                    }
+                    
+                    @Override
+                    public void onFailure(Call<String> call, Throwable t) {
+                        Log.e(TAG, "Failed to update article info: " + t.getMessage(), t);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error in updateArticleInfoWhenOnline: " + e.getMessage(), e);
+        }
+    }
+    
+    private String getCategoryPath(int categoryId) {
+        switch (categoryId) {
+            case 1: return "thoi-su";
+            case 2: return "the-gioi";
+            case 3: return "kinh-doanh";
+            case 4: return "giai-tri";
+            case 5: return "the-thao";
+            case 6: return "phap-luat";
+            case 7: return "giao-duc";
+            case 8: return "suc-khoe";
+            case 9: return "doi-song";
+            case 10: return "du-lich";
+            case 11: return "khoa-hoc";
+            case 12: return "so-hoa";
+            case 13: return "xe";
+            case 14: return "y-kien";
+            case 15: return "tam-su";
+            default: return "";
+        }
+    }
+    
+    private String getCategoryName(int categoryId) {
+        switch (categoryId) {
+            case 1: return "Thời sự";
+            case 2: return "Thế giới";
+            case 3: return "Kinh doanh";
+            case 4: return "Giải trí";
+            case 5: return "Thể thao";
+            case 6: return "Pháp luật";
+            case 7: return "Giáo dục";
+            case 8: return "Sức khỏe";
+            case 9: return "Đời sống";
+            case 10: return "Du lịch";
+            case 11: return "Khoa học";
+            case 12: return "Số hóa";
+            case 13: return "Xe";
+            case 14: return "Ý kiến";
+            case 15: return "Tâm sự";
+            default: return "Tin tức";
+        }
     }
 } 

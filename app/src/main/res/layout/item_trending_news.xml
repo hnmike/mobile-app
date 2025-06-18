@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="#FFFFFF">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp">
+
+        <!-- Rank Indicator -->
+        <TextView
+            android:id="@+id/tvTrendingRank"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/bg_trending_normal"
+            android:gravity="center"
+            android:text="1"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Article Image -->
+        <ImageView
+            android:id="@+id/ivTrendingImage"
+            android:layout_width="80dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="12dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Trending Article Image"
+            app:layout_constraintStart_toEndOf="@+id/tvTrendingRank"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:background="#D9D9D9" />
+
+        <!-- Content Container -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivTrendingImage"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- Category -->
+            <TextView
+                android:id="@+id/tvTrendingCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tin tức"
+                android:textColor="#ACACAC"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <!-- Article Title -->
+            <TextView
+                android:id="@+id/tvTrendingTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="Sample trending article title that might be longer"
+                android:textColor="#262626"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- Date -->
+            <TextView
+                android:id="@+id/tvTrendingDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="2 hours ago"
+                android:textColor="#8B8B8B"
+                android:textSize="10sp" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView> 

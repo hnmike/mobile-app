@@ -198,34 +198,85 @@ public class VnExpressParser {
                     if (!imageUrl.isEmpty() && !imageUrl.startsWith("http")) {
                         imageUrl = "https:" + imageUrl;
                     }
-                    Log.d("VnExpressParser", "Found image with alternative selector for '" + title + "': " + imageUrl);
-                } else {
-                    Log.w("VnExpressParser", "Image element not found for article: " + title);
                 }
             }
             
-            // Trích xuất mô tả ngắn/đoạn trích nội dung
+            // Trích xuất thời gian đăng bài
+            Date publishedTime = new Date(); // Mặc định là thời gian hiện tại
+            Element timeElement = articleElement.selectFirst("span.time");
+            if (timeElement != null) {
+                String timeText = timeElement.text().trim();
+                Log.d("VnExpressParser", "Found time element with 'span.time': '" + timeText + "'");
+                publishedTime = parseTimeFromText(timeText);
+            } else {
+                // Thử các selector khác cho thời gian
+                timeElement = articleElement.selectFirst("time");
+                if (timeElement != null) {
+                    String timeText = timeElement.text().trim();
+                    Log.d("VnExpressParser", "Found time element with 'time': '" + timeText + "'");
+                    publishedTime = parseTimeFromText(timeText);
+                } else {
+                    // Thử thêm nhiều selector khác
+                    String[] timeSelectors = {
+                        "span.time-ago",
+                        "div.time", 
+                        "span.date",
+                        "div.date",
+                        "span.timer",
+                        "div.timer",
+                        "span[class*='time']",
+                        "div[class*='time']",
+                        "span[class*='date']",
+                        "div[class*='date']"
+                    };
+                    
+                    boolean foundTime = false;
+                    for (String selector : timeSelectors) {
+                        timeElement = articleElement.selectFirst(selector);
+                        if (timeElement != null) {
+                            String timeText = timeElement.text().trim();
+                            if (!timeText.isEmpty()) {
+                                Log.d("VnExpressParser", "Found time element with '" + selector + "': '" + timeText + "'");
+                                publishedTime = parseTimeFromText(timeText);
+                                foundTime = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!foundTime) {
+                        Log.w("VnExpressParser", "No time element found for article: '" + title + "', using current time");
+                        // Log HTML structure for debugging
+                        Log.d("VnExpressParser", "Article HTML structure: " + articleElement.html().substring(0, Math.min(500, articleElement.html().length())));
+                    }
+                }
+            }
+            
+            // Trích xuất mô tả ngắn (nếu có)
             Element descElement = articleElement.selectFirst("p.description");
-            String content = descElement != null ? descElement.text() : ""; // Lấy text nếu phần tử tồn tại, ngược lại là chuỗi rỗng
-
+            String description = "";
+            if (descElement != null) {
+                description = descElement.text().trim();
+            }
+            
             // Tạo đối tượng Article
-            String id = UUID.randomUUID().toString(); // Tạo ID duy nhất cho bài báo
-            String categoryName = CATEGORY_MAP.getOrDefault(categoryId, "Tin tức"); // Lấy tên danh mục, mặc định là "Tin tức"
+            String id = UUID.randomUUID().toString();
+            String categoryName = CATEGORY_MAP.getOrDefault(categoryId, "Tin tức");
             
             return new Article(
                     id,
                     title,
-                    content, // Đây là mô tả ngắn, không phải nội dung đầy đủ
+                    description, // Mô tả ngắn
                     imageUrl,
                     sourceUrl,
-                    "VnExpress", // Tên nguồn báo
+                    "VnExpress",
                     categoryId,
                     categoryName,
-                    new Date() // Ngày xuất bản được gán là thời điểm hiện tại khi parse
+                    publishedTime // Sử dụng thời gian đã parse
             );
         } catch (Exception e) {
             Log.e("VnExpressParser", "Error parsing article element: " + e.getMessage(), e);
-            return null; // Trả về null nếu có lỗi xảy ra
+            return null;
         }
     }
 
@@ -403,6 +454,13 @@ public class VnExpressParser {
                     categoryId, // ID danh mục dạng số nguyên
                     isFeatured
             );
+            
+            // Set publishedDate field (Date object) for proper time display
+            newsItem.setPublishedDate(article.getPublishedTime());
+            
+            Log.d("VnExpressParser", "Created News item: " + newsItem.getTitle() + 
+                    ", publishedDate: " + newsItem.getPublishedDate() + 
+                    ", publishDate: " + newsItem.getPublishDate());
 
             newsList.add(newsItem);
 
@@ -441,6 +499,88 @@ public class VnExpressParser {
                 Log.w("VnExpressParser", "Unknown integer category ID: " + categoryId);
                 return null; // Trả về null cho ID không xác định
         }
+    }
+
+    /**
+     * Parse time from VnExpress text format
+     * @param timeText Text containing time information from VnExpress
+     * @return Date object, or current time if parsing fails
+     */
+    private static Date parseTimeFromText(String timeText) {
+        if (timeText == null || timeText.trim().isEmpty()) {
+            Log.d("VnExpressParser", "Time text is null or empty, using current time");
+            return new Date();
+        }
+        
+        Log.d("VnExpressParser", "Parsing time text: '" + timeText + "'");
+        
+        try {
+            // VnExpress thường có format như: "2 giờ trước", "30 phút trước", "Hôm nay 15:30", "Hôm qua 20:15"
+            timeText = timeText.trim().toLowerCase();
+            
+            if (timeText.contains("vừa xong") || timeText.contains("vừa đăng")) {
+                Log.d("VnExpressParser", "Found 'vừa xong/vừa đăng', using current time");
+                return new Date();
+            }
+            
+            if (timeText.contains("phút trước")) {
+                String minutesStr = timeText.replaceAll("[^0-9]", "");
+                if (!minutesStr.isEmpty()) {
+                    int minutes = Integer.parseInt(minutesStr);
+                    Log.d("VnExpressParser", "Found '" + minutes + " phút trước'");
+                    return new Date(System.currentTimeMillis() - (minutes * 60 * 1000L));
+                }
+            }
+            
+            if (timeText.contains("giờ trước")) {
+                String hoursStr = timeText.replaceAll("[^0-9]", "");
+                if (!hoursStr.isEmpty()) {
+                    int hours = Integer.parseInt(hoursStr);
+                    Log.d("VnExpressParser", "Found '" + hours + " giờ trước'");
+                    return new Date(System.currentTimeMillis() - (hours * 60 * 60 * 1000L));
+                }
+            }
+            
+            if (timeText.contains("ngày trước")) {
+                String daysStr = timeText.replaceAll("[^0-9]", "");
+                if (!daysStr.isEmpty()) {
+                    int days = Integer.parseInt(daysStr);
+                    Log.d("VnExpressParser", "Found '" + days + " ngày trước'");
+                    return new Date(System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000L));
+                }
+            }
+            
+            // Thử parse format "HH:mm - dd/MM/yyyy" hoặc "HH:mm dd/MM/yyyy"
+            if (timeText.contains(":") && timeText.contains("/")) {
+                String[] patterns = {
+                    "HH:mm - dd/MM/yyyy",
+                    "HH:mm dd/MM/yyyy", 
+                    "HH:mm - dd/MM",
+                    "HH:mm dd/MM"
+                };
+                
+                for (String pattern : patterns) {
+                    try {
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault());
+                        Date parsedDate = sdf.parse(timeText);
+                        if (parsedDate != null) {
+                            Log.d("VnExpressParser", "Successfully parsed date with pattern '" + pattern + "': " + parsedDate);
+                            return parsedDate;
+                        }
+                    } catch (Exception e) {
+                        // Continue to next pattern
+                    }
+                }
+            }
+            
+            Log.w("VnExpressParser", "Could not parse time text: '" + timeText + "', using current time");
+            
+        } catch (Exception e) {
+            Log.w("VnExpressParser", "Error parsing time text: " + timeText + ", error: " + e.getMessage());
+        }
+        
+        // Fallback to current time
+        return new Date();
     }
 
     /**
